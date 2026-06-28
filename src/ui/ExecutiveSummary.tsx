@@ -3,7 +3,7 @@
  * vs supply, funnel snapshot, velocity decomposition, "what changed", watchlist,
  * and auto-generated plain-English callouts. Respects filters + PII masking.
  */
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   CartesianGrid,
   Line,
@@ -29,7 +29,9 @@ import {
 } from '../domain/metrics';
 import { Bar, Card, Chip, InfoTip, SectionTitle, Stat } from './components';
 import { ExportBar } from './ExportBar';
+import { PrintableReport } from './PrintableReport';
 import { FORMULAS } from './definitions';
+import { nextPaint, printDocument } from './export';
 import { num, pct } from './format';
 
 function fmt(v: number | null, unit: ChangeItem['unit']): string {
@@ -69,6 +71,25 @@ export function ExecutiveSummary() {
   const result = useStore((s) => s.result);
   const filters = useStore((s) => s.filters);
   const setActiveView = useStore((s) => s.setActiveView);
+  const reveal = useStore((s) => s.prefs.privateDrillDown);
+  const setPref = useStore((s) => s.setPref);
+  const [showReport, setShowReport] = useState(false);
+  const [includePii, setIncludePii] = useState(false);
+
+  const printFullReport = async () => {
+    const needToggle = includePii && !reveal;
+    if (needToggle) {
+      await setPref('privateDrillDown', true);
+      await nextPaint();
+    }
+    setShowReport(true);
+    document.body.classList.add('print-report-active');
+    await nextPaint();
+    printDocument();
+    document.body.classList.remove('print-report-active');
+    setShowReport(false);
+    if (needToggle) await setPref('privateDrillDown', false);
+  };
 
   const rows = useMemo(() => (result ? applyFilters(result.rows, filters) : []), [result, filters]);
   const k = useMemo(() => headlineKpis(rows), [rows]);
@@ -88,9 +109,18 @@ export function ExecutiveSummary() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-5">
-      <div className="no-print mb-3 flex items-center justify-between gap-3">
+      <div className="no-print mb-3 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-semibold text-slate-900">Executive Summary</h1>
-        <ExportBar targetId="exec-summary" baseName="executive-summary" />
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-1.5 text-xs text-slate-500" title="Include unmasked PII in full report">
+            <input type="checkbox" checked={includePii} onChange={(e) => setIncludePii(e.target.checked)} />
+            Include PII
+          </label>
+          <button type="button" className="btn-ghost px-2.5 py-1 text-xs" onClick={() => void printFullReport()}>
+            ⬇ Full Report PDF
+          </button>
+          <ExportBar targetId="exec-summary" baseName="executive-summary" />
+        </div>
       </div>
       <div id="exec-summary" className="grid gap-5">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
@@ -196,6 +226,7 @@ export function ExecutiveSummary() {
         </Card>
       </div>
       </div>
+      {showReport && <PrintableReport />}
     </div>
   );
 }

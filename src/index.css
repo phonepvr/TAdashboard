@@ -53,10 +53,18 @@ body {
   }
 }
 
+/* Print-only content: hidden on screen, shown in print. */
+.print-only {
+  display: none !important;
+}
+
 /* One-pager print: hide app chrome, flatten cards. */
 @media print {
   .no-print {
     display: none !important;
+  }
+  .print-only {
+    display: block !important;
   }
   body {
     background: #fff;
@@ -65,5 +73,16 @@ body {
     box-shadow: none !important;
     border-color: #e5e7eb !important;
     break-inside: avoid;
+  }
+  .print-page {
+    page-break-after: always;
+    padding: 0 8px;
+  }
+  .print-page:last-child {
+    page-break-after: auto;
+  }
+  body.print-report-active #exec-summary,
+  body.print-report-active .no-print {
+    display: none !important;
   }
 }
