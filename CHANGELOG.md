@@ -2,6 +2,30 @@
 
 All notable changes to this project are documented here.
 
+## [1.2.0] — Interactive drill-down, CSV export & AM/NS brand
+
+### Added
+- **Click-to-drill on every number.** KPI tiles, cycle-time cards, ageing/source
+  bars, and per-BU / per-Function / recruiter / source rows are now clickable and
+  open a **row-level drill-down overlay** showing the exact requisitions behind the
+  figure (Esc / backdrop to close).
+- **CSV export everywhere.** A small **↓ CSV** button on every data card exports
+  that card's underlying data, and the drill-down overlay exports the full row set
+  with one click. Files are produced **entirely in the browser** (Blob + UTF-8 BOM
+  for Excel) — no upload, no network.
+- **AM/NS brand system** (ArcelorMittal Nippon Steel India): Albert Sans primary
+  typeface (self-hosted), Smart Red / Strong Black / Pure White palette, the
+  signature diagonal **Stroke**, and an on-brand multi-page PDF (Executive Summary
+  + one page per HR Head, each with the black-and-red brand header).
+
+### Privacy
+- Drill-down / CSV output respects the global **Private drill-down** toggle: people
+  fields stay **masked** unless explicitly revealed — exports always match what's
+  on screen, with a masking disclosure in the overlay footer.
+- Export **filenames never embed PII** (recruiter / HR-head names are masked and
+  slugified before use). The Playwright e2e asserts the drill-down + CSV path makes
+  **zero external requests**.
+
 ## [1.1.0] — Explain-every-number
 
 ### Added

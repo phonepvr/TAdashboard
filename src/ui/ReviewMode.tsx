@@ -17,10 +17,13 @@ import {
   type GroupScorecard,
   type KpiCompare,
 } from '../domain/metrics';
+import type { LogicalRole } from '../domain/types';
 import { formatISO } from '../domain/dates';
-import { Card, Chip, SectionTitle } from './components';
+import { Card, Chip, CsvButton, SectionTitle } from './components';
 import { ExportBar } from './ExportBar';
 import { FORMULAS } from './definitions';
+import { downloadCsv, slugify } from './csv';
+import { requisitionDrill } from './drill';
 import { num, pct } from './format';
 import { buildAliasMap, maskValue } from './mask';
 
@@ -40,6 +43,7 @@ function variance(c: KpiCompare): { tone: string; label: string } {
 export function ReviewMode() {
   const result = useStore((s) => s.result);
   const reveal = useStore((s) => s.prefs.privateDrillDown);
+  const openDrill = useStore((s) => s.openDrill);
 
   const heads = useMemo(() => (result ? distinctValues(result.rows, 'hrHead') : []), [result]);
   const aliasMap = useMemo(() => buildAliasMap(heads, 'HR Head'), [heads]);
@@ -55,8 +59,17 @@ export function ReviewMode() {
   if (heads.length === 0) return <div className="px-4 py-16 text-center text-sm text-slate-400">No HR Head field mapped.</div>;
 
   const label = (v: string) => (reveal ? v : aliasMap.get(v) ?? v);
+  const headLabel = label(selected);
   const cmp = reviewComparison(scope, result.rows);
   const drops = dropAnalysis(scope);
+  const buScores = byGroupScorecards(scope, 'businessUnit');
+  const fnScores = byGroupScorecards(scope, 'function');
+  const agedList = agedOpenWorklist(scope, 90);
+  const tboList = tboWorklist(scope);
+
+  // Filenames never embed the (possibly real) HR-head name; the group (BU/Function) is non-sensitive.
+  const drillGroup = (role: LogicalRole, roleLabel: string, group: string) =>
+    openDrill(requisitionDrill(`${headLabel} · ${roleLabel}: ${group}`, slugify(`review-${role}-${group}`), scope.filter((r) => r.cat[role] === group), reveal));
 
   return (
     <div className="mx-auto grid max-w-6xl gap-5 px-4 py-5">
@@ -80,7 +93,13 @@ export function ReviewMode() {
 
         {/* Scope vs baseline */}
         <Card>
-          <SectionTitle hint="their median vs org median — variance highlighted" info={FORMULAS.reviewScorecard}>Scorecard vs baseline</SectionTitle>
+          <SectionTitle hint="their median vs org median — variance highlighted" info={FORMULAS.reviewScorecard}
+            action={<CsvButton onClick={() => downloadCsv('review-scorecard', cmp, [
+              { header: 'KPI', value: (c) => c.label },
+              { header: 'Unit', value: (c) => c.unit },
+              { header: 'This head', value: (c) => c.scope ?? '' },
+              { header: 'Org baseline', value: (c) => c.baseline ?? '' },
+            ])} />}>Scorecard vs baseline</SectionTitle>
           <table className="w-full text-sm">
             <thead className="text-xs text-slate-400">
               <tr>
@@ -108,17 +127,26 @@ export function ReviewMode() {
 
         {/* Per-BU & per-Function scorecards */}
         <div className="grid gap-5 lg:grid-cols-2">
-          <ScorecardTable title="Per Business Unit" rows={byGroupScorecards(scope, 'businessUnit')} info={FORMULAS.groupScorecard} />
-          <ScorecardTable title="Per Function" rows={byGroupScorecards(scope, 'function')} info={FORMULAS.groupScorecard} />
+          <ScorecardTable title="Per Business Unit" rows={buScores} info={FORMULAS.groupScorecard} csvName="review-by-bu" onPick={(g) => drillGroup('businessUnit', 'BU', g)} />
+          <ScorecardTable title="Per Function" rows={fnScores} info={FORMULAS.groupScorecard} csvName="review-by-function" onPick={(g) => drillGroup('function', 'Function', g)} />
         </div>
 
         {/* Worklists */}
         <div className="grid gap-5 lg:grid-cols-2">
           <Card>
-            <SectionTitle hint="open > 90d, oldest first — walk these in the review" info={FORMULAS.reviewAgedWorklist}>Aged-open worklist</SectionTitle>
+            <SectionTitle hint="open > 90d, oldest first — walk these in the review" info={FORMULAS.reviewAgedWorklist}
+              action={agedList.length > 0 ? <CsvButton onClick={() => downloadCsv('review-aged-open', agedList, [
+                { header: 'Req', value: (a) => a.reqId ?? `#${a.i}` },
+                { header: 'Position', value: (a) => a.positionTitle ?? '' },
+                { header: 'BU', value: (a) => a.businessUnit ?? '' },
+                { header: 'Function', value: (a) => a.function ?? '' },
+                { header: 'Stage', value: (a) => a.stage ?? '' },
+                { header: 'Age (d)', value: (a) => a.ageDays },
+                { header: 'Recruiter', value: (a) => maskValue(a.recruiter, true, reveal) },
+              ])} /> : undefined}>Aged-open worklist</SectionTitle>
             <Worklist
               cols={['Req', 'BU', 'Function', 'Stage', 'Age']}
-              rows={agedOpenWorklist(scope, 90).slice(0, 15).map((a) => [
+              rows={agedList.slice(0, 15).map((a) => [
                 a.reqId ?? `#${a.i}`,
                 a.businessUnit ?? '—',
                 a.function ?? '—',
@@ -129,10 +157,17 @@ export function ReviewMode() {
             />
           </Card>
           <Card>
-            <SectionTitle hint="offer accepted, awaiting join" info={FORMULAS.reviewTbo}>TBO worklist</SectionTitle>
+            <SectionTitle hint="offer accepted, awaiting join" info={FORMULAS.reviewTbo}
+              action={tboList.length > 0 ? <CsvButton onClick={() => downloadCsv('review-tbo', tboList, [
+                { header: 'Req', value: (t) => t.reqId ?? `#${t.i}` },
+                { header: 'BU', value: (t) => t.businessUnit ?? '' },
+                { header: 'TBO age (d)', value: (t) => t.tboAgeingDays ?? '' },
+                { header: 'Next follow-up', value: (t) => (t.nextFollowUp !== null ? formatISO(t.nextFollowUp) : '') },
+                { header: 'Recruiter', value: (t) => maskValue(t.recruiter, true, reveal) },
+              ])} /> : undefined}>TBO worklist</SectionTitle>
             <Worklist
               cols={['Req', 'BU', 'TBO age', 'Next follow-up', 'Recruiter']}
-              rows={tboWorklist(scope).slice(0, 15).map((t) => [
+              rows={tboList.slice(0, 15).map((t) => [
                 t.reqId ?? `#${t.i}`,
                 t.businessUnit ?? '—',
                 t.tboAgeingDays !== null ? `${num(t.tboAgeingDays)}d` : '—',
@@ -146,7 +181,12 @@ export function ReviewMode() {
 
         {/* Drop analysis */}
         <Card>
-          <SectionTitle hint="counts + masked reasons (names stripped)" info={FORMULAS.dropAnalysis}>Drop analysis</SectionTitle>
+          <SectionTitle hint="counts + masked reasons (names stripped)" info={FORMULAS.dropAnalysis}
+            action={drops.reasons.length > 0 ? <CsvButton onClick={() => downloadCsv('review-drops', drops.reasons, [
+              { header: 'Reason', value: (r) => r.key },
+              { header: 'Count', value: (r) => r.count },
+              { header: 'Share %', value: (r) => Math.round(r.share * 100) },
+            ])} /> : undefined}>Drop analysis</SectionTitle>
           <div className="mb-2 text-sm text-slate-600">
             <strong>{num(drops.count)}</strong> drop(s) · {pct(drops.rate * 100)} of scope
           </div>
@@ -165,10 +205,34 @@ export function ReviewMode() {
   );
 }
 
-function ScorecardTable({ title, rows, info }: { title: string; rows: GroupScorecard[]; info?: string }) {
+function ScorecardTable({
+  title,
+  rows,
+  info,
+  csvName,
+  onPick,
+}: {
+  title: string;
+  rows: GroupScorecard[];
+  info?: string;
+  csvName: string;
+  onPick?: (group: string) => void;
+}) {
   return (
     <Card>
-      <SectionTitle info={info}>{title}</SectionTitle>
+      <SectionTitle
+        info={info}
+        action={rows.length > 0 ? <CsvButton onClick={() => downloadCsv(csvName, rows, [
+          { header: 'Group', value: (g) => g.group },
+          { header: 'Reqs', value: (g) => g.n },
+          { header: 'Median TTF', value: (g) => g.medianTtf ?? '' },
+          { header: 'Acceptance %', value: (g) => Math.round(g.acceptance * 100) },
+          { header: '% aged > 180d', value: (g) => Math.round(g.pctAged180 * 100) },
+          { header: 'Drop %', value: (g) => Math.round(g.dropRate * 100) },
+        ])} /> : undefined}
+      >
+        {title}
+      </SectionTitle>
       {rows.length === 0 ? (
         <p className="text-xs text-slate-400">No data.</p>
       ) : (
@@ -186,7 +250,11 @@ function ScorecardTable({ title, rows, info }: { title: string; rows: GroupScore
             </thead>
             <tbody>
               {rows.slice(0, 10).map((g) => (
-                <tr key={g.group} className="border-t border-slate-100">
+                <tr
+                  key={g.group}
+                  onClick={() => onPick?.(g.group)}
+                  className={`border-t border-slate-100 ${onPick ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+                >
                   <td className="py-1 text-slate-700">{g.group}</td>
                   <td className="tabular py-1 text-right text-slate-600">{num(g.n)}</td>
                   <td className="tabular py-1 text-right text-slate-600">{g.medianTtf !== null ? `${num(g.medianTtf)}d` : '—'}</td>

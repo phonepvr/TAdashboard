@@ -22,16 +22,19 @@ import {
   funnel,
   headlineKpis,
   pipelineSnapshot,
+  sourceMix,
   timeToFill,
   velocityDecomposition,
   whatChanged,
   type ChangeItem,
 } from '../domain/metrics';
-import { Bar, Card, Chip, InfoTip, SectionTitle, Stat } from './components';
+import { Bar, Card, Chip, CsvButton, InfoTip, SectionTitle, Stat } from './components';
 import { ExportBar } from './ExportBar';
 import { PrintableReport } from './PrintableReport';
 import { FORMULAS } from './definitions';
 import { nextPaint, printDocument } from './export';
+import { downloadCsv } from './csv';
+import { requisitionDrill } from './drill';
 import { num, pct } from './format';
 
 function fmt(v: number | null, unit: ChangeItem['unit']): string {
@@ -73,6 +76,7 @@ export function ExecutiveSummary() {
   const setActiveView = useStore((s) => s.setActiveView);
   const reveal = useStore((s) => s.prefs.privateDrillDown);
   const setPref = useStore((s) => s.setPref);
+  const openDrill = useStore((s) => s.openDrill);
   const [showReport, setShowReport] = useState(false);
   const [includePii, setIncludePii] = useState(false);
 
@@ -98,9 +102,16 @@ export function ExecutiveSummary() {
   const supply = useMemo(() => demandVsSupply(rows).slice(-14), [rows]);
   const changes = useMemo(() => whatChanged(rows), [rows]);
   const notes = useMemo(() => callouts(rows), [rows]);
+  const funnelStages = useMemo(() => funnel(rows), [rows]);
+  const mix = useMemo(() => sourceMix(rows), [rows]);
   const ttf = timeToFill(rows);
   const bn = bottleneck(decomp);
   const aged180 = k.agedOver180;
+
+  // Click a KPI → drill to the requisitions behind it (PII masked per the toggle).
+  const drill = (title: string, file: string, subset: typeof rows) =>
+    openDrill(requisitionDrill(title, file, subset, reveal));
+  const topSource = mix[0]?.key ?? null;
 
   if (!result) return null;
   if (rows.length === 0) return <div className="px-4 py-16 text-center text-sm text-slate-400">No rows match the current filters.</div>;
@@ -124,19 +135,33 @@ export function ExecutiveSummary() {
       </div>
       <div id="exec-summary" className="grid gap-5">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
-        <Stat label="Requisitions" value={num(k.total)} sub={`${num(snap.joined)} joined · ${num(snap.open)} open`} info={FORMULAS.totalReqs} />
-        <Stat label="% Open" value={pct(k.pctOpen * 100)} info={FORMULAS.pctOpen} />
-        <Stat label="Median TTF" value={ttf ? `${num(ttf.median)}d` : '—'} sub={ttf ? `n=${num(ttf.n)}` : 'n=0'} info={FORMULAS.medianTtf} />
-        <Stat label="Offer acceptance" value={pct(k.acceptanceRate * 100)} sub={k.acceptanceLikelyArtifact ? '⚠ artifact' : undefined} info={FORMULAS.offerAcceptance} />
-        <Stat label="TBO" value={num(snap.tbo)} info={FORMULAS.tbo} />
-        <Stat label="Aged > 180d" value={num(aged180)} info={FORMULAS.agedOver180} />
-        <Stat label="Female share" value={pct(k.femaleShareKnown * 100)} sub={`${pct(k.unknownGenderShare * 100)} unknown`} info={FORMULAS.femaleShare} />
-        <Stat label="Top source" value={pct(k.topSourceShare * 100)} info={FORMULAS.topSource} />
+        <Stat label="Requisitions" value={num(k.total)} sub={`${num(snap.joined)} joined · ${num(snap.open)} open`} info={FORMULAS.totalReqs}
+          onClick={() => drill('All requisitions', 'requisitions', rows)} />
+        <Stat label="% Open" value={pct(k.pctOpen * 100)} info={FORMULAS.pctOpen}
+          onClick={() => drill('Open requisitions', 'open-requisitions', rows.filter((r) => r.isOpen))} />
+        <Stat label="Median TTF" value={ttf ? `${num(ttf.median)}d` : '—'} sub={ttf ? `n=${num(ttf.n)}` : 'n=0'} info={FORMULAS.medianTtf}
+          onClick={() => drill('Joined cohort (Time-to-Fill)', 'joined-cohort', rows.filter((r) => r.isJoined))} />
+        <Stat label="Offer acceptance" value={pct(k.acceptanceRate * 100)} sub={k.acceptanceLikelyArtifact ? '⚠ artifact' : undefined} info={FORMULAS.offerAcceptance}
+          onClick={() => drill('Offers sent', 'offers-sent', rows.filter((r) => r.date.offerSentDate != null))} />
+        <Stat label="TBO" value={num(snap.tbo)} info={FORMULAS.tbo}
+          onClick={() => drill('TBO — offer accepted, awaiting join', 'tbo', rows.filter((r) => r.isTBO))} />
+        <Stat label="Aged > 180d" value={num(aged180)} info={FORMULAS.agedOver180}
+          onClick={() => drill('Open reqs aged > 180 days', 'aged-over-180d', rows.filter((r) => r.isOpen && (r.num.ageingDays ?? 0) > 180))} />
+        <Stat label="Female share" value={pct(k.femaleShareKnown * 100)} sub={`${pct(k.unknownGenderShare * 100)} unknown`} info={FORMULAS.femaleShare}
+          onClick={() => drill('Female (known gender) requisitions', 'female-known', rows.filter((r) => r.cat.gender === 'Female'))} />
+        <Stat label="Top source" value={pct(k.topSourceShare * 100)} sub={topSource ?? undefined} info={FORMULAS.topSource}
+          onClick={() => topSource && drill(`Source: ${topSource}`, 'top-source', rows.filter((r) => (r.cat.source ?? 'Unknown') === topSource))} />
       </div>
 
       {/* What changed */}
       <div>
-        <SectionTitle hint="recent vs prior comparable period" info="Each tile compares a recent window against the immediately prior window of equal length.">What changed</SectionTitle>
+        <SectionTitle hint="recent vs prior comparable period" info="Each tile compares a recent window against the immediately prior window of equal length."
+          action={<CsvButton onClick={() => downloadCsv('what-changed', changes, [
+            { header: 'Metric', value: (c) => c.label },
+            { header: 'Current', value: (c) => c.current },
+            { header: 'Prior', value: (c) => c.prior },
+            { header: 'Unit', value: (c) => c.unit },
+          ])} />}>What changed</SectionTitle>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {changes.map((c) => <ChangeBadge key={c.key} item={c} />)}
         </div>
@@ -144,7 +169,12 @@ export function ExecutiveSummary() {
 
       {/* Demand vs supply */}
       <Card>
-        <SectionTitle hint="reqs received vs joins per month" info={FORMULAS.demandVsSupply}>Demand vs supply</SectionTitle>
+        <SectionTitle hint="reqs received vs joins per month" info={FORMULAS.demandVsSupply}
+          action={<CsvButton onClick={() => downloadCsv('demand-vs-supply', supply, [
+            { header: 'Month', value: (p) => p.month },
+            { header: 'Received', value: (p) => p.received },
+            { header: 'Joined', value: (p) => p.joined },
+          ])} />}>Demand vs supply</SectionTitle>
         <div className="h-64 w-full" role="img" aria-label={`Demand vs supply line chart over ${supply.length} months: requisitions received versus joins per month.`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={supply} margin={{ top: 8, right: 16, bottom: 0, left: -16 }}>
@@ -166,9 +196,15 @@ export function ExecutiveSummary() {
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Funnel snapshot */}
         <Card>
-          <SectionTitle hint="current pipeline by stage reached" info={FORMULAS.funnel}>Funnel snapshot</SectionTitle>
+          <SectionTitle hint="current pipeline by stage reached" info={FORMULAS.funnel}
+            action={<CsvButton onClick={() => downloadCsv('funnel-snapshot', funnelStages, [
+              { header: 'Stage', value: (s) => s.label },
+              { header: 'Count', value: (s) => s.count },
+              { header: 'Yield from prev %', value: (s) => Math.round(s.yieldFromPrev * 100) },
+              { header: 'Yield from start %', value: (s) => Math.round(s.yieldFromStart * 100) },
+            ])} />}>Funnel snapshot</SectionTitle>
           <div className="grid gap-2">
-            {funnel(rows).map((s) => (
+            {funnelStages.map((s) => (
               <div key={s.key} className="grid grid-cols-12 items-center gap-2">
                 <span className="col-span-3 truncate text-xs text-slate-600">{s.label}</span>
                 <span className="col-span-6"><Bar value={s.yieldFromStart * 100} /></span>
@@ -180,7 +216,14 @@ export function ExecutiveSummary() {
 
         {/* Velocity decomposition */}
         <Card>
-          <SectionTitle hint="median days per segment" info={FORMULAS.velocityDecomp}>Velocity decomposition</SectionTitle>
+          <SectionTitle hint="median days per segment" info={FORMULAS.velocityDecomp}
+            action={<CsvButton onClick={() => downloadCsv('velocity-decomposition', decomp, [
+              { header: 'Segment', value: (d) => d.label },
+              { header: 'Median days', value: (d) => d.stats?.median ?? '' },
+              { header: 'p25', value: (d) => d.stats?.p25 ?? '' },
+              { header: 'p75', value: (d) => d.stats?.p75 ?? '' },
+              { header: 'n', value: (d) => d.stats?.n ?? 0 },
+            ])} />}>Velocity decomposition</SectionTitle>
           <div className="grid gap-2">
             {decomp.map((d) => (
               <div key={d.key} className="grid grid-cols-12 items-center gap-2">

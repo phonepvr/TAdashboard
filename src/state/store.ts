@@ -11,6 +11,7 @@ import type {
   TableProfile,
 } from '../domain/types';
 import type { FilterContext } from '../domain/metrics';
+import type { DrillData } from '../ui/csv';
 import { buildDefaultMapping, suggestStageOrder } from '../domain/mapping';
 import { MAPPING_VERSION } from '../domain/mapping';
 import { generateDemoTable } from '../domain/demo';
@@ -68,6 +69,8 @@ interface StoreState {
   filters: FilterContext;
   activeView: AppView;
   presenting: boolean;
+  /** Row-level drill-down payload shown in an overlay (null = closed). */
+  drill: DrillData | null;
 
   init: () => Promise<void>;
   loadFile: (file: File) => Promise<void>;
@@ -82,6 +85,8 @@ interface StoreState {
   clearFilters: () => void;
   setActiveView: (view: AppView) => void;
   setPresenting: (v: boolean) => void;
+  openDrill: (d: DrillData) => void;
+  closeDrill: () => void;
   getRawRows: (indices: number[]) => Promise<{ i: number; cells: RawRow }[]>;
   setPref: <K extends keyof PrivacyPrefs>(key: K, value: PrivacyPrefs[K]) => Promise<void>;
   clearAll: () => Promise<void>;
@@ -107,6 +112,7 @@ export const useStore = create<StoreState>()((set, get) => ({
   filters: {},
   activeView: 'exec',
   presenting: false,
+  drill: null,
 
   init: async () => {
     if (get().initialized) return;
@@ -185,7 +191,7 @@ export const useStore = create<StoreState>()((set, get) => ({
   backToMapping: () => set({ status: 'mapping' }),
 
   newSession: () =>
-    set({ status: 'idle', profile: null, result: null, progress: null, error: null, filters: {} }),
+    set({ status: 'idle', profile: null, result: null, progress: null, error: null, filters: {}, drill: null }),
 
   setFilter: (role, values) => {
     const filters = { ...get().filters };
@@ -196,6 +202,8 @@ export const useStore = create<StoreState>()((set, get) => ({
   clearFilters: () => set({ filters: {} }),
   setActiveView: (view) => set({ activeView: view }),
   setPresenting: (v) => set({ presenting: v }),
+  openDrill: (d) => set({ drill: d }),
+  closeDrill: () => set({ drill: null }),
   getRawRows: (indices) => getWorkerClient().getRawRows(indices),
 
   setPref: async (key, value) => {

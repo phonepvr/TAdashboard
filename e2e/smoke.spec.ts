@@ -32,6 +32,14 @@ test('demo → map → data-quality readout, fully offline + CSP present', async
   await expect(page.getByText(/Demand vs supply/i)).toBeVisible();
   await expect(page.getByText('DEMO DATA')).toBeVisible();
 
+  // (5b) Click a KPI tile → row-level drill-down overlay opens with a CSV export.
+  await page.getByRole('button', { name: /Requisitions/i }).first().click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('button', { name: /CSV/i })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+
   // (6) Switch to HR-Head Review mode.
   await page.getByRole('button', { name: 'Review' }).click();
   await expect(page.getByText(/Scorecard vs baseline/i)).toBeVisible();

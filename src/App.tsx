@@ -4,6 +4,7 @@ import { TopBar } from './ui/TopBar';
 import { FileLoader } from './ui/FileLoader';
 import { MappingScreen } from './ui/MappingScreen';
 import { FilterBar } from './ui/FilterBar';
+import { DrillDownModal } from './ui/DrillDownModal';
 import { ProgressBar } from './ui/components';
 import type { AppView } from './state/store';
 
@@ -83,6 +84,7 @@ export function App() {
   const error = useStore((s) => s.error);
   const newSession = useStore((s) => s.newSession);
   const presenting = useStore((s) => s.presenting);
+  const drillOpen = useStore((s) => s.drill !== null);
 
   useEffect(() => {
     void init();
@@ -91,6 +93,7 @@ export function App() {
   return (
     <div className="min-h-full">
       <TopBar />
+      {drillOpen && <DrillDownModal />}
       <main>
         {status === 'idle' && <FileLoader />}
 

@@ -12,6 +12,7 @@ export function InfoTip({ text, label }: { text: string; label?: string }) {
       <button
         type="button"
         aria-label={label ?? 'How this is calculated'}
+        onClick={(e) => e.stopPropagation()}
         className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-slate-300 text-[9px] font-semibold leading-none text-slate-400 transition-colors hover:border-brand-400 hover:text-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
       >
         i
@@ -30,27 +31,88 @@ export function Card({ children, className = '' }: { children: ReactNode; classN
   return <div className={`card p-4 ${className}`}>{children}</div>;
 }
 
-export function SectionTitle({ children, hint, info }: { children: ReactNode; hint?: string; info?: string }) {
+export function SectionTitle({
+  children,
+  hint,
+  info,
+  action,
+}: {
+  children: ReactNode;
+  hint?: string;
+  info?: string;
+  /** right-aligned controls (e.g. a CSV export button). */
+  action?: ReactNode;
+}) {
   return (
     <div className="mb-3 flex items-baseline justify-between gap-3">
       <h2 className="flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-slate-600">
         {children}
         {info && <InfoTip text={info} />}
       </h2>
-      {hint && <span className="text-xs text-slate-400">{hint}</span>}
+      <div className="flex shrink-0 items-center gap-2">
+        {hint && <span className="hidden text-xs text-slate-400 md:inline">{hint}</span>}
+        {action}
+      </div>
     </div>
   );
 }
 
-export function Stat({ label, value, sub, info }: { label: string; value: ReactNode; sub?: ReactNode; info?: string }) {
+/** A small "↓ CSV" button for exporting the data behind a card. */
+export function CsvButton({ onClick, label = 'CSV' }: { onClick: () => void; label?: string }) {
   return (
-    <div className="card p-4">
+    <button
+      type="button"
+      onClick={onClick}
+      title="Download this card’s data as CSV"
+      className="no-print inline-flex items-center gap-1 rounded border border-slate-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 transition-colors hover:border-brand-400 hover:bg-brand-50 hover:text-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+    >
+      <span aria-hidden>↓</span> {label}
+    </button>
+  );
+}
+
+export function Stat({
+  label,
+  value,
+  sub,
+  info,
+  onClick,
+}: {
+  label: string;
+  value: ReactNode;
+  sub?: ReactNode;
+  info?: string;
+  /** when set, the tile becomes a button that drills into the rows behind it. */
+  onClick?: () => void;
+}) {
+  const body = (
+    <>
       <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500">
         <span>{label}</span>
         {info && <InfoTip text={info} label={`How ${label} is calculated`} />}
       </div>
       <div className="tabular mt-1 text-2xl font-semibold text-slate-900">{value}</div>
       {sub && <div className="mt-1 text-xs text-slate-500">{sub}</div>}
+    </>
+  );
+  if (!onClick) return <div className="card p-4">{body}</div>;
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className="group card relative cursor-pointer p-4 transition-all hover:border-brand-300 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+    >
+      {body}
+      <span className="no-print absolute right-2 top-2 text-[11px] text-slate-300 transition-colors group-hover:text-brand-500" aria-hidden>
+        ⤢
+      </span>
     </div>
   );
 }

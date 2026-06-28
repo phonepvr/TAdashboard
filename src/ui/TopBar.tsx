@@ -59,7 +59,7 @@ export function TopBar() {
               ArcelorMittal Nippon Steel India
             </div>
           </div>
-          {isDemo && <Chip tone="demo">DEMO</Chip>}
+          {isDemo && <Chip tone="demo">DEMO DATA</Chip>}
         </div>
 
         {/* Controls */}
