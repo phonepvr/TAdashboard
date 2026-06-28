@@ -5,8 +5,10 @@ import { fileURLToPath, URL } from 'node:url';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // Project-pages base path: assets resolve under https://<user>.github.io/tadashboard/
-  base: '/tadashboard/',
+  // Project-pages base path: must match the repo name EXACTLY (GitHub Pages paths
+  // are case-sensitive). Repo is `TAdashboard`, so the site + assets resolve under
+  // https://<user>.github.io/TAdashboard/ .
+  base: '/TAdashboard/',
   plugins: [react()],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },

@@ -75,9 +75,11 @@ This repo deploys to GitHub Pages via GitHub Actions (no `gh-pages` branch).
 
 1. **Pages source:** repo **Settings → Pages → Build and deployment → Source =
    "GitHub Actions"**.
-2. **Base path:** already set to `/tadashboard/` in `vite.config.ts`. If you fork
-   under a different repo name, change `base` to `/<repo-name>/`. The site serves
-   at `https://<user>.github.io/<repo-name>/`.
+2. **Base path:** set to **`/TAdashboard/`** in `vite.config.ts` — it must match
+   the repo name **exactly** (GitHub Pages project paths are **case-sensitive**).
+   If you fork/rename, change `base` to `/<repo-name>/` with identical casing. The
+   site serves at `https://<user>.github.io/<repo-name>/` (here:
+   **https://phonepvr.github.io/TAdashboard/**).
 3. **Native secret protection:** **Settings → Code security → Secret scanning** and
    **Push protection = Enabled** (free on public repos).
 4. **Branch protection:** make the CI checks **`build-test`** and **`secret-scan`**

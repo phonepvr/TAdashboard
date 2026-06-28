@@ -19,7 +19,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: 'http://localhost:4173/tadashboard/',
+    baseURL: 'http://localhost:4173/TAdashboard/',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     ...(executablePath ? { launchOptions: { executablePath } } : {}),
@@ -27,7 +27,7 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4173 --strictPort',
-    url: 'http://localhost:4173/tadashboard/',
+    url: 'http://localhost:4173/TAdashboard/',
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
   },
