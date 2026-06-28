@@ -28,6 +28,7 @@ import {
   type ChangeItem,
 } from '../domain/metrics';
 import { Bar, Card, Chip, SectionTitle, Stat } from './components';
+import { ExportBar } from './ExportBar';
 import { num, pct } from './format';
 
 function fmt(v: number | null, unit: ChangeItem['unit']): string {
@@ -82,7 +83,12 @@ export function ExecutiveSummary() {
   const maxSeg = Math.max(1, ...decomp.map((d) => d.stats?.median ?? 0));
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-5 px-4 py-5">
+    <div className="mx-auto max-w-6xl px-4 py-5">
+      <div className="no-print mb-3 flex items-center justify-between gap-3">
+        <h1 className="text-lg font-semibold text-slate-900">Executive Summary</h1>
+        <ExportBar targetId="exec-summary" baseName="executive-summary" />
+      </div>
+      <div id="exec-summary" className="grid gap-5">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
         <Stat label="Requisitions" value={num(k.total)} sub={`${num(snap.joined)} joined · ${num(snap.open)} open`} />
         <Stat label="% Open" value={pct(k.pctOpen * 100)} />
@@ -105,7 +111,7 @@ export function ExecutiveSummary() {
       {/* Demand vs supply */}
       <Card>
         <SectionTitle hint="reqs received vs joins per month">Demand vs supply</SectionTitle>
-        <div className="h-64 w-full">
+        <div className="h-64 w-full" role="img" aria-label={`Demand vs supply line chart over ${supply.length} months: requisitions received versus joins per month.`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={supply} margin={{ top: 8, right: 16, bottom: 0, left: -16 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -184,6 +190,7 @@ export function ExecutiveSummary() {
             </ul>
           )}
         </Card>
+      </div>
       </div>
     </div>
   );

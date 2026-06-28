@@ -67,6 +67,7 @@ interface StoreState {
   initialized: boolean;
   filters: FilterContext;
   activeView: AppView;
+  presenting: boolean;
 
   init: () => Promise<void>;
   loadFile: (file: File) => Promise<void>;
@@ -80,6 +81,7 @@ interface StoreState {
   setFilter: (role: SlicerFilterKey, values: string[]) => void;
   clearFilters: () => void;
   setActiveView: (view: AppView) => void;
+  setPresenting: (v: boolean) => void;
   getRawRows: (indices: number[]) => Promise<{ i: number; cells: RawRow }[]>;
   setPref: <K extends keyof PrivacyPrefs>(key: K, value: PrivacyPrefs[K]) => Promise<void>;
   clearAll: () => Promise<void>;
@@ -104,6 +106,7 @@ export const useStore = create<StoreState>()((set, get) => ({
   initialized: false,
   filters: {},
   activeView: 'exec',
+  presenting: false,
 
   init: async () => {
     if (get().initialized) return;
@@ -192,6 +195,7 @@ export const useStore = create<StoreState>()((set, get) => ({
   },
   clearFilters: () => set({ filters: {} }),
   setActiveView: (view) => set({ activeView: view }),
+  setPresenting: (v) => set({ presenting: v }),
   getRawRows: (indices) => getWorkerClient().getRawRows(indices),
 
   setPref: async (key, value) => {

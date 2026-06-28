@@ -42,6 +42,7 @@ export function TopBar() {
   const setPref = useStore((s) => s.setPref);
   const clearAll = useStore((s) => s.clearAll);
   const newSession = useStore((s) => s.newSession);
+  const setPresenting = useStore((s) => s.setPresenting);
   const [confirming, setConfirming] = useState(false);
 
   return (
@@ -66,6 +67,11 @@ export function TopBar() {
             checked={prefs.sessionOnly}
             onChange={(v) => void setPref('sessionOnly', v)}
           />
+          {status === 'ready' && (
+            <button type="button" className="btn-ghost px-2.5 py-1 text-xs" onClick={() => setPresenting(true)}>
+              ▶ Present
+            </button>
+          )}
           {status !== 'idle' && (
             <button type="button" className="btn-ghost px-2.5 py-1 text-xs" onClick={newSession}>
               Load new file

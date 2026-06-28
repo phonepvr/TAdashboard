@@ -223,7 +223,9 @@ export function normalizeRow(
   // sanitized reason phrase: text after the first name/value delimiter, capped.
   let dropReason: string | null = null;
   if (dropCell) {
-    const parts = dropCell.split(/\s*[-:–—|]\s*/);
+    // split on the first name/value delimiter. Alternation (not a [char:class])
+    // so Tailwind's JIT doesn't mistake it for an arbitrary CSS property.
+    const parts = dropCell.split(/\s*(?:-|:|–|—|\|)\s*/);
     const phrase = (parts.length > 1 ? parts.slice(1).join(' - ') : dropCell).trim();
     dropReason = phrase ? phrase.slice(0, 60) : null;
   }

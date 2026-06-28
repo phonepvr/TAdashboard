@@ -5,6 +5,7 @@ export default {
     extend: {
       fontFamily: {
         sans: [
+          'Inter Variable',
           'system-ui',
           '-apple-system',
           'Segoe UI',

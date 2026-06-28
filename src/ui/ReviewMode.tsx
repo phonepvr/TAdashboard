@@ -19,6 +19,7 @@ import {
 } from '../domain/metrics';
 import { formatISO } from '../domain/dates';
 import { Card, Chip, SectionTitle } from './components';
+import { ExportBar } from './ExportBar';
 import { num, pct } from './format';
 import { buildAliasMap, maskValue } from './mask';
 
@@ -67,9 +68,7 @@ export function ReviewMode() {
             ))}
           </select>
         </label>
-        <button type="button" className="btn-ghost px-3 py-1.5 text-xs" onClick={() => window.print()}>
-          🖨 Print one-pager
-        </button>
+        <ExportBar targetId="review-onepager" baseName="hr-head-one-pager" />
       </div>
 
       <div id="review-onepager" className="grid gap-5">

@@ -2,6 +2,31 @@
 
 All notable changes to this project are documented here.
 
+## [1.0.0] — Phase 5: Polish (feature-complete)
+
+### Added
+- **Presentation mode**: projector-friendly, page-by-page deck for the HR-head
+  walkthrough — enlarged type, hidden controls, arrow-key navigation, Esc to exit.
+- **Client-side exports** (§11): Executive Summary and HR-head one-pager to
+  **PDF** (print path with print CSS) and **PNG** (`html2canvas`, lazy-loaded),
+  with a **per-export opt-in** to include unmasked PII. (DQ remediation export
+  shipped in 0.2.0.)
+- **Self-hosted Inter font** (bundled woff2, zero network).
+
+### Performance & a11y
+- **Code-split** the Recharts-heavy views — initial bundle ~661 kB → **~195 kB**;
+  charts load on demand.
+- **50k-row performance test** in the suite (full pipeline within budget); parsing
+  + aggregation run in a Web Worker so the UI stays responsive.
+- Accessibility: `aria-current` on the active tab, `role="img"` + descriptive
+  `aria-label`s on charts, keyboard-navigable controls, no colour-only encoding.
+
+### Acceptance
+- Loads & renders every view fully offline (Playwright asserts **zero** external
+  requests + the CSP `<meta>`); repo + history contain **no data**; Data-Leak
+  Guard + gitleaks are required checks; build ships no data-shaped or `.map`
+  files; 72 unit tests + e2e green.
+
 ## [0.4.0] — Phase 4: Patterns & Projections
 
 ### Added

@@ -64,7 +64,7 @@ export function FunnelView() {
         {/* TTF distribution */}
         <Card>
           <SectionTitle hint="30-day bins; median marked in cards above">TTF distribution</SectionTitle>
-          <div className="h-56">
+          <div className="h-56" role="img" aria-label={`Time-to-fill distribution histogram in 30-day bins across ${hist.reduce((a, b) => a + b.count, 0)} joined requisitions.`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={hist} margin={{ top: 8, right: 12, bottom: 0, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />

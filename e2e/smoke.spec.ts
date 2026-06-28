@@ -40,7 +40,14 @@ test('demo → map → data-quality readout, fully offline + CSP present', async
   await page.getByRole('button', { name: 'Data Quality' }).click();
   await expect(page.getByText(/Data-quality score/i)).toBeVisible();
 
-  // (8) An interaction (toggle a privacy control) — still no egress.
+  // (8) Presentation mode (lazy-loaded) + arrow-key nav + exit.
+  await page.getByRole('button', { name: /Present/ }).click();
+  await expect(page.getByText(/Esc exit/i)).toBeVisible({ timeout: 20_000 });
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('Escape');
+  await expect(page.getByText(/Esc exit/i)).toBeHidden();
+
+  // (9) An interaction (toggle a privacy control) — still no egress.
   await page.getByRole('switch', { name: /Private drill-down/i }).click();
 
   expect(external, `unexpected external requests: ${external.join(', ')}`).toHaveLength(0);

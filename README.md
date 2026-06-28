@@ -4,10 +4,11 @@ An **offline, privacy-first** Talent-Acquisition / recruitment command centre. I
 turns a requisition-tracking spreadsheet into an executive decision tool —
 **entirely inside your browser**.
 
-> **Status:** Phase 1 (ingestion + privacy spine + data-quality readout). The
-> executive summary, HR-Head review, funnel/velocity, ageing/TBO, diversity,
-> source, recruiter and forecast views arrive in later phases. See
-> [CHANGELOG](./CHANGELOG.md).
+> **Status:** feature-complete (v1.0). Views: **Executive Summary**, **HR-Head
+> Review** (meeting mode), **Funnel & Velocity**, **Ageing & TBO**, **Diversity
+> & Source**, **Recruiters**, **Forecast** (patterns & projections), and **Data
+> Quality** — plus a **Presentation mode** and client-side **PDF/PNG exports**.
+> See the [CHANGELOG](./CHANGELOG.md).
 
 ---
 
@@ -49,12 +50,22 @@ all data there.
    adjust, order your funnel stages, and bind category values to canonical
    buckets. Your mapping is saved locally (no values, just header names + your
    choices).
-3. **Read the Data-Quality readout.** Completeness, date health (valid / missing /
-   invalid), controlled-vocabulary violations, broken columns, impossible-sequence
-   checks, and a transparent quality score.
+3. **Explore the views** (top tabs): Executive Summary, HR-Head Review, Funnel &
+   Velocity, Ageing & TBO, Diversity & Source, Recruiters, Forecast, and Data
+   Quality. The **global filter bar** (period / BU / function / HR head / level /
+   recruiter / source / demand) drives every analytical view.
+4. **Present** (top bar) for a projector-friendly, page-by-page walkthrough
+   (arrow keys to navigate, Esc to exit). **Export** the Executive Summary or an
+   HR-head one-pager to **PDF or PNG** — generated entirely in your browser, with
+   a per-export opt-in to include unmasked PII.
+
+Durations report **median + p25/p75 + n**; invalid vs missing dates are kept
+separate; broken columns are excluded and listed; forecasts show their method +
+assumptions + uncertainty and are labelled **directional**.
 
 Adding more rows, a new month, a new BU/recruiter, or a new stage label needs
-**no code change** — everything flows through the mapping config.
+**no code change** — everything flows through the mapping config. The pipeline
+runs in a Web Worker and handles **~50k rows** without freezing the UI.
 
 ---
 
@@ -94,10 +105,11 @@ benchmarks are reference only.
 
 ## How it's built
 
-- **React + TypeScript + Vite**, **Tailwind** (system-font stack, zero network),
-  **Recharts** (later phases), **SheetJS** for parsing (in a Web Worker),
-  **Zustand** state, **IndexedDB** (via `idb`) for local-only persistence,
-  **date-fns**.
+- **React + TypeScript + Vite**, **Tailwind** with a **self-hosted Inter** font
+  (bundled woff2, zero network), **Recharts** for charts (code-split, loaded on
+  demand), **SheetJS** for parsing (in a Web Worker), **Zustand** state,
+  **IndexedDB** (via `idb`) for local-only persistence, **date-fns**, and
+  **html2canvas** (lazy-loaded) for PNG export.
 - Architecture: `src/domain/` holds pure, unit-tested functions (schema, dates,
   normalization, mapping, de-dup, data-quality, demo); `src/worker/` does heavy
   lifting off the main thread; `src/state/` owns the store + persistence;

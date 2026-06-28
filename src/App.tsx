@@ -1,19 +1,27 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { useStore } from './state/store';
 import { TopBar } from './ui/TopBar';
 import { FileLoader } from './ui/FileLoader';
 import { MappingScreen } from './ui/MappingScreen';
-import { DataQualityReadout } from './ui/DataQualityReadout';
-import { ExecutiveSummary } from './ui/ExecutiveSummary';
-import { ReviewMode } from './ui/ReviewMode';
-import { FunnelView } from './ui/FunnelView';
-import { AgeingView } from './ui/AgeingView';
-import { DiversitySourceView } from './ui/DiversitySourceView';
-import { RecruiterView } from './ui/RecruiterView';
-import { ForecastView } from './ui/ForecastView';
 import { FilterBar } from './ui/FilterBar';
 import { ProgressBar } from './ui/components';
 import type { AppView } from './state/store';
+
+// Code-split the analytical views (Recharts is heavy) so the initial bundle —
+// loader + mapping + privacy spine — stays small. Views load on demand.
+const ExecutiveSummary = lazy(() => import('./ui/ExecutiveSummary').then((m) => ({ default: m.ExecutiveSummary })));
+const ReviewMode = lazy(() => import('./ui/ReviewMode').then((m) => ({ default: m.ReviewMode })));
+const FunnelView = lazy(() => import('./ui/FunnelView').then((m) => ({ default: m.FunnelView })));
+const AgeingView = lazy(() => import('./ui/AgeingView').then((m) => ({ default: m.AgeingView })));
+const DiversitySourceView = lazy(() => import('./ui/DiversitySourceView').then((m) => ({ default: m.DiversitySourceView })));
+const RecruiterView = lazy(() => import('./ui/RecruiterView').then((m) => ({ default: m.RecruiterView })));
+const ForecastView = lazy(() => import('./ui/ForecastView').then((m) => ({ default: m.ForecastView })));
+const DataQualityReadout = lazy(() => import('./ui/DataQualityReadout').then((m) => ({ default: m.DataQualityReadout })));
+const PresentationMode = lazy(() => import('./ui/PresentationMode').then((m) => ({ default: m.PresentationMode })));
+
+const ViewFallback = () => (
+  <div className="flex min-h-[40vh] items-center justify-center text-sm text-slate-400">Loading view…</div>
+);
 
 function Dashboard() {
   const activeView = useStore((s) => s.activeView);
@@ -38,6 +46,7 @@ function Dashboard() {
           <button
             key={t.key}
             type="button"
+            aria-current={activeView === t.key ? 'page' : undefined}
             onClick={() => setActiveView(t.key)}
             className={`rounded-t-lg px-3 py-1.5 text-sm font-medium ${
               activeView === t.key
@@ -50,14 +59,16 @@ function Dashboard() {
         ))}
       </div>
       {showFilter && <FilterBar />}
-      {activeView === 'exec' && <ExecutiveSummary />}
-      {activeView === 'review' && <ReviewMode />}
-      {activeView === 'funnel' && <FunnelView />}
-      {activeView === 'ageing' && <AgeingView />}
-      {activeView === 'diversity' && <DiversitySourceView />}
-      {activeView === 'recruiters' && <RecruiterView />}
-      {activeView === 'forecast' && <ForecastView />}
-      {activeView === 'dq' && <DataQualityReadout />}
+      <Suspense fallback={<ViewFallback />}>
+        {activeView === 'exec' && <ExecutiveSummary />}
+        {activeView === 'review' && <ReviewMode />}
+        {activeView === 'funnel' && <FunnelView />}
+        {activeView === 'ageing' && <AgeingView />}
+        {activeView === 'diversity' && <DiversitySourceView />}
+        {activeView === 'recruiters' && <RecruiterView />}
+        {activeView === 'forecast' && <ForecastView />}
+        {activeView === 'dq' && <DataQualityReadout />}
+      </Suspense>
     </div>
   );
 }
@@ -68,6 +79,7 @@ export function App() {
   const progress = useStore((s) => s.progress);
   const error = useStore((s) => s.error);
   const newSession = useStore((s) => s.newSession);
+  const presenting = useStore((s) => s.presenting);
 
   useEffect(() => {
     void init();
@@ -88,7 +100,14 @@ export function App() {
 
         {status === 'mapping' && <MappingScreen />}
 
-        {status === 'ready' && <Dashboard />}
+        {status === 'ready' &&
+          (presenting ? (
+            <Suspense fallback={<ViewFallback />}>
+              <PresentationMode />
+            </Suspense>
+          ) : (
+            <Dashboard />
+          ))}
 
         {status === 'error' && (
           <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-16 text-center">
