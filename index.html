@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      PRIVACY / ZERO-EGRESS CONTENT SECURITY POLICY.
+      GitHub Pages cannot set HTTP response headers, so the CSP is delivered here
+      as a <meta http-equiv> tag. Intent:
+        - connect-src 'none'   -> the app makes NO fetch / XHR / WebSocket / beacon calls.
+        - script-src 'self'    -> only bundled, same-origin JS (no inline, no CDN).
+        - worker-src 'self' blob: -> the SheetJS parser worker (same-origin / blob).
+        - img/font/style         -> local assets only (Tailwind needs 'unsafe-inline' styles).
+      Note: `frame-ancestors` and `upgrade-insecure-requests` are honoured only when
+      sent as an HTTP header; they are listed for intent and are harmlessly ignored
+      in a <meta> tag. Everything that actually matters for egress (connect/script/
+      worker/img/font/object/base/form) IS enforced from <meta>.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'none'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>TA Command Centre</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      This dashboard runs entirely in your browser and requires JavaScript. No
+      data ever leaves this device.
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

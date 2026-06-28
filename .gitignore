@@ -1,0 +1,49 @@
+# ───────────────────────── DATA — never commit (privacy, §1.4) ─────────────────────────
+# Spreadsheet / delimited extracts of any kind.
+*.xlsx
+*.xls
+*.xlsm
+*.xlsb
+*.csv
+*.tsv
+*.parquet
+*.ndjson
+
+# Data-dump locations (the app loads data at RUNTIME only; none lives in the repo).
+/data/
+/samples/
+/uploads/
+/exports/
+/private/
+/fixtures-real/
+
+# Note: code-config JSON (package.json, tsconfig*.json, *.config.json) is INTENTIONALLY
+# tracked. Only data-shaped JSON in the data paths above is ignored.
+
+# ───────────────────────── Secrets / env ─────────────────────────
+.env
+.env.*
+*.pem
+*.key
+
+# ───────────────────────── Build / tooling output ─────────────────────────
+/dist/
+/dist-ssr/
+node_modules/
+/coverage/
+/playwright-report/
+/test-results/
+/blob-report/
+/.vite/
+*.tsbuildinfo
+
+# ───────────────────────── OS / editor noise ─────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.log
+npm-debug.log*

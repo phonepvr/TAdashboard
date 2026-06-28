@@ -1,0 +1,14 @@
+# gitleaks config — secret scanning for the Data-Leak Guard (§1.4 / §12).
+# Uses the full default ruleset plus a small allowlist for known-safe noise.
+title = "tadashboard gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Global allowlist for lockfiles and generated artifacts."
+paths = [
+  '''package-lock\.json''',
+  '''pnpm-lock\.yaml''',
+  '''yarn\.lock''',
+]

@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Fixed locale + calm light surface. Fonts are the system stack (zero network). */
+  color-scheme: light;
+  --surface: 248 250 252; /* slate-50  */
+  --panel: 255 255 255;
+  --ink: 15 23 42; /* slate-900 */
+  --muted: 100 116 139; /* slate-500 */
+  --hairline: 226 232 240; /* slate-200 */
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: rgb(var(--surface));
+  color: rgb(var(--ink));
+  font-family: theme('fontFamily.sans');
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium
+      transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500
+      focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-brand-600 text-white hover:bg-brand-700;
+  }
+  .btn-ghost {
+    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+  }
+  .btn-danger {
+    @apply btn border border-critical-500 bg-white text-critical-600 hover:bg-critical-50;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}

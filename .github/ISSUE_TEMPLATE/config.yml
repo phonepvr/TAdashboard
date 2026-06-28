@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Privacy & data handling
+    url: https://github.com/phonepvr/tadashboard/blob/main/.github/CONTRIBUTING.md
+    about: Before opening an issue, please read the "never put real data in this repo" policy.
