@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-// Self-hosted Inter (bundled woff2, served from 'self' — zero network).
-import '@fontsource-variable/inter';
+// Self-hosted Albert Sans — AM/NS primary typeface (bundled woff2, zero network).
+import '@fontsource-variable/albert-sans';
 import './index.css';
 import { App } from './App';
 

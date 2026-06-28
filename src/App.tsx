@@ -41,20 +41,23 @@ function Dashboard() {
   const showFilter = activeView !== 'review' && activeView !== 'dq';
   return (
     <div>
-      <div className="no-print flex flex-wrap gap-1 border-b border-slate-200 bg-white px-4 pt-2">
+      <div className="no-print flex flex-wrap gap-0.5 border-b-2 border-slate-200 bg-white px-4 pt-2">
         {tabs.map((t) => (
           <button
             key={t.key}
             type="button"
             aria-current={activeView === t.key ? 'page' : undefined}
             onClick={() => setActiveView(t.key)}
-            className={`rounded-t-lg px-3 py-1.5 text-sm font-medium ${
+            className={`relative px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
               activeView === t.key
-                ? 'border border-b-white border-slate-200 bg-white text-brand-700'
-                : 'text-slate-500 hover:text-slate-700'
+                ? 'text-brand-500'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             {t.label}
+            {activeView === t.key && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500" />
+            )}
           </button>
         ))}
       </div>

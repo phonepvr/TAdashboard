@@ -1,4 +1,4 @@
-/** Persistent top bar: identity, demo badge, and the local-only privacy controls. */
+/** Persistent top bar: AM/NS brand identity + local-only privacy controls. */
 import { useState } from 'react';
 import { useStore } from '../state/store';
 import { Chip } from './components';
@@ -15,18 +15,19 @@ function Toggle({
   title?: string;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-600" title={title}>
+    <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-300" title={title}>
       <button
         type="button"
         role="switch"
         aria-checked={checked}
         aria-label={label}
         onClick={() => onChange(!checked)}
-        className={`relative h-5 w-9 rounded-full transition-colors ${checked ? 'bg-brand-600' : 'bg-slate-300'}`}
+        className={`relative h-4.5 w-8 rounded-full transition-colors ${checked ? 'bg-brand-500' : 'bg-slate-600'}`}
+        style={{ height: '18px', width: '32px' }}
       >
         <span
-          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-            checked ? 'translate-x-4' : 'translate-x-0.5'
+          className={`absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+            checked ? 'translate-x-3.5' : 'translate-x-0.5'
           }`}
         />
       </button>
@@ -46,15 +47,24 @@ export function TopBar() {
   const [confirming, setConfirming] = useState(false);
 
   return (
-    <header className="no-print sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-slate-900">TA Command Centre</span>
-          <Chip tone="good" >offline</Chip>
-          {isDemo && <Chip tone="demo">DEMO DATA</Chip>}
+    <header className="no-print sticky top-0 z-10" style={{ background: '#000' }}>
+      <div className="mx-auto flex max-w-6xl items-stretch justify-between gap-3 px-4">
+        {/* Brand identity */}
+        <div className="amns-stroke flex items-center gap-3 py-2.5 pr-10">
+          <div>
+            <div className="text-sm font-bold uppercase tracking-widest text-white">
+              TA Command Centre
+            </div>
+            <div className="text-[9px] font-medium uppercase tracking-[0.18em] text-slate-400">
+              ArcelorMittal Nippon Steel India
+            </div>
+          </div>
+          {isDemo && <Chip tone="demo">DEMO</Chip>}
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
+        {/* Controls */}
+        <div className="flex flex-wrap items-center gap-4 py-2.5">
+          <Chip tone="good" >offline</Chip>
           <Toggle
             label="Private drill-down"
             title="Reveal PII locally. Off = people & free-text masked everywhere."
@@ -63,26 +73,36 @@ export function TopBar() {
           />
           <Toggle
             label="Session-only"
-            title="Memory-only: nothing is persisted; discarded on tab close."
+            title="Memory-only: nothing persisted; discarded on tab close."
             checked={prefs.sessionOnly}
             onChange={(v) => void setPref('sessionOnly', v)}
           />
           {status === 'ready' && (
-            <button type="button" className="btn-ghost px-2.5 py-1 text-xs" onClick={() => setPresenting(true)}>
+            <button
+              type="button"
+              className="rounded px-2.5 py-1 text-xs font-semibold tracking-wide text-white transition-colors hover:bg-white/10"
+              style={{ border: '1px solid rgba(255,255,255,0.25)' }}
+              onClick={() => setPresenting(true)}
+            >
               ▶ Present
             </button>
           )}
           {status !== 'idle' && (
-            <button type="button" className="btn-ghost px-2.5 py-1 text-xs" onClick={newSession}>
+            <button
+              type="button"
+              className="rounded px-2.5 py-1 text-xs font-semibold tracking-wide text-white transition-colors hover:bg-white/10"
+              style={{ border: '1px solid rgba(255,255,255,0.25)' }}
+              onClick={newSession}
+            >
               Load new file
             </button>
           )}
           {confirming ? (
             <span className="flex items-center gap-2 text-xs">
-              <span className="text-critical-600">Wipe all in-browser data?</span>
+              <span className="text-brand-400">Wipe all in-browser data?</span>
               <button
                 type="button"
-                className="btn-danger px-2 py-1 text-xs"
+                className="rounded bg-brand-500 px-2 py-1 text-xs font-semibold text-white hover:bg-brand-600"
                 onClick={() => {
                   setConfirming(false);
                   void clearAll();
@@ -90,14 +110,19 @@ export function TopBar() {
               >
                 Yes, clear
               </button>
-              <button type="button" className="btn-ghost px-2 py-1 text-xs" onClick={() => setConfirming(false)}>
+              <button
+                type="button"
+                className="rounded px-2 py-1 text-xs font-semibold text-slate-300 hover:text-white"
+                onClick={() => setConfirming(false)}
+              >
                 Cancel
               </button>
             </span>
           ) : (
             <button
               type="button"
-              className="btn-danger px-2.5 py-1 text-xs"
+              className="rounded px-2.5 py-1 text-xs font-semibold text-brand-400 transition-colors hover:bg-brand-500 hover:text-white"
+              style={{ border: '1px solid #e52726' }}
               onClick={() => setConfirming(true)}
             >
               Clear all data

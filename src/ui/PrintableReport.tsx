@@ -1,8 +1,8 @@
 /**
  * Multi-page printable report: Executive Summary (page 1) + one page per HR Head.
- * Hidden on screen, shown only during print via the .print-only CSS class.
- * Triggered by a dedicated button that sets printing state, renders this, and
- * calls window.print().
+ * Hidden on screen; visible during print only (.print-only).
+ * Styled to AM/NS brand guidelines: Strong Black header, Smart Red section titles,
+ * Albert Sans typeface, the AM/NS diagonal stroke element.
  */
 import { useMemo } from 'react';
 import { useStore } from '../state/store';
@@ -28,17 +28,49 @@ import type { NormalizedRow } from '../domain/types';
 import { buildAliasMap, maskValue } from './mask';
 import { num, pct } from './format';
 
+const BRAND_RED = '#e52726';
+const STRONG_BLACK = '#000000';
+const INK = '#0f172a';
+const MUTED = '#64748b';
+const HAIRLINE = '#e2e8f0';
+
 const fmtCmp = (v: number | null, unit: KpiCompare['unit']) =>
   v === null ? '—' : unit === 'days' ? `${num(v)}d` : pct(v * 100);
 
-function variance(c: KpiCompare): { tone: string; label: string } {
-  if (c.scope === null || c.baseline === null) return { tone: '', label: '' };
+function variance(c: KpiCompare): { color: string; label: string } {
+  if (c.scope === null || c.baseline === null) return { color: MUTED, label: '' };
   const diff = c.scope - c.baseline;
-  if (Math.abs(diff) < 1e-9) return { tone: '', label: '0' };
+  if (Math.abs(diff) < 1e-9) return { color: MUTED, label: '0' };
   const worse = c.direction === 'lowerBetter' ? diff > 0 : c.direction === 'higherBetter' ? diff < 0 : false;
-  const tone = worse ? 'color: #dc2626' : c.direction === 'neutral' ? '' : 'color: #16a34a';
+  const color = c.direction === 'neutral' ? MUTED : worse ? '#dc2626' : '#15803d';
   const d = c.unit === 'days' ? `${diff > 0 ? '+' : ''}${num(diff)}d` : `${diff > 0 ? '+' : ''}${pct(diff * 100)}`;
-  return { tone, label: d };
+  return { color, label: d };
+}
+
+/** AM/NS brand header block: Strong Black background + diagonal red stroke. */
+function BrandHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="print-brand-header">
+      <div className="print-brand-header__text">
+        <div className="print-brand-header__title">{title}</div>
+        {subtitle && <div className="print-brand-header__sub">{subtitle}</div>}
+      </div>
+      <div className="print-brand-stroke" />
+    </div>
+  );
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return <div className="print-section-title">{children}</div>;
+}
+
+function Kpi({ label, value }: { label: string; value: string }) {
+  return (
+    <td style={{ padding: '6px 8px', verticalAlign: 'top' }}>
+      <div style={{ fontSize: '7pt', fontWeight: 600, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: '16pt', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: INK, lineHeight: 1.1 }}>{value}</div>
+    </td>
+  );
 }
 
 export function PrintableReport() {
@@ -63,19 +95,18 @@ export function PrintableReport() {
 
   return (
     <div className="print-only">
-      {/* Page 1: Executive Summary */}
+      {/* ── PAGE 1: Executive Summary ──────────────────────────── */}
       <div className="print-page">
-        <h1 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>Executive Summary</h1>
+        <BrandHeader title="TA Command Centre" subtitle="ArcelorMittal Nippon Steel India · Executive Summary" />
 
-        <table style={{ width: '100%', fontSize: 11, borderCollapse: 'collapse', marginBottom: 12 }}>
+        {/* Headline KPIs */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 4 }}>
           <tbody>
             <tr>
               <Kpi label="Requisitions" value={num(k.total)} />
               <Kpi label="% Open" value={pct(k.pctOpen * 100)} />
               <Kpi label="Median TTF" value={ttf ? `${num(ttf.median)}d` : '—'} />
-              <Kpi label="Offer Accept" value={pct(k.acceptanceRate * 100)} />
-            </tr>
-            <tr>
+              <Kpi label="Offer accept" value={pct(k.acceptanceRate * 100)} />
               <Kpi label="TBO" value={num(snap.tbo)} />
               <Kpi label="Aged > 180d" value={num(k.agedOver180)} />
               <Kpi label="Female share" value={pct(k.femaleShareKnown * 100)} />
@@ -85,24 +116,24 @@ export function PrintableReport() {
         </table>
 
         {/* What changed */}
-        <SectionHeading>What changed</SectionHeading>
-        <table style={{ width: '100%', fontSize: 10, borderCollapse: 'collapse', marginBottom: 12 }}>
+        <SectionTitle>What changed</SectionTitle>
+        <table style={{ width: '100%', fontSize: '8.5pt', borderCollapse: 'collapse', marginBottom: 4 }}>
           <thead>
             <tr>
               {changes.map((c) => (
-                <th key={c.key} style={{ textAlign: 'left', fontWeight: 500, color: '#64748b', padding: '2px 6px' }}>{c.label}</th>
+                <th key={c.key} style={{ textAlign: 'left', fontWeight: 600, color: MUTED, padding: '2px 5px', fontSize: '7pt', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{c.label}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             <tr>
               {changes.map((c) => {
-                const cur = c.current;
-                const pri = c.prior;
-                const fv = (v: number | null) => v === null ? '—' : c.unit === 'pct' ? `${Math.round(v * 100)}%` : c.unit === 'days' ? `${num(v)}d` : num(v);
+                const fv = (v: number | null) =>
+                  v === null ? '—' : c.unit === 'pct' ? `${Math.round(v * 100)}%` : c.unit === 'days' ? `${num(v)}d` : num(v);
                 return (
-                  <td key={c.key} style={{ padding: '2px 6px', fontSize: 11 }}>
-                    <strong>{fv(cur)}</strong> <span style={{ color: '#94a3b8' }}>vs {fv(pri)}</span>
+                  <td key={c.key} style={{ padding: '2px 5px' }}>
+                    <strong>{fv(c.current)}</strong>{' '}
+                    <span style={{ color: MUTED }}>vs {fv(c.prior)}</span>
                   </td>
                 );
               })}
@@ -110,38 +141,65 @@ export function PrintableReport() {
           </tbody>
         </table>
 
-        {/* Funnel */}
-        <SectionHeading>Funnel snapshot</SectionHeading>
-        <table style={{ width: '100%', fontSize: 10, borderCollapse: 'collapse', marginBottom: 12 }}>
-          <tbody>
-            {fn.map((s) => (
-              <tr key={s.key}>
-                <td style={{ padding: '1px 4px', width: 120, color: '#475569' }}>{s.label}</td>
-                <td style={{ padding: '1px 4px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{num(s.count)}</td>
-                <td style={{ padding: '1px 4px', textAlign: 'right', color: '#64748b' }}>{pct(s.yieldFromPrev * 100)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Funnel + Velocity side by side */}
+        <div style={{ display: 'flex', gap: 20 }}>
+          <div style={{ flex: 1 }}>
+            <SectionTitle>Funnel snapshot</SectionTitle>
+            <table style={{ width: '100%', fontSize: '8.5pt', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: 'left', fontWeight: 600, color: MUTED, padding: '1px 4px', fontSize: '7pt' }}>Stage</th>
+                  <th style={{ textAlign: 'right', fontWeight: 600, color: MUTED, padding: '1px 4px', fontSize: '7pt' }}>Count</th>
+                  <th style={{ textAlign: 'right', fontWeight: 600, color: MUTED, padding: '1px 4px', fontSize: '7pt' }}>Yield</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fn.map((s) => (
+                  <tr key={s.key} style={{ borderTop: `1px solid ${HAIRLINE}` }}>
+                    <td style={{ padding: '2px 4px', color: '#334155' }}>{s.label}</td>
+                    <td style={{ padding: '2px 4px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{num(s.count)}</td>
+                    <td style={{ padding: '2px 4px', textAlign: 'right', color: MUTED, fontVariantNumeric: 'tabular-nums' }}>{pct(s.yieldFromPrev * 100)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{ flex: 1 }}>
+            <SectionTitle>Velocity decomposition</SectionTitle>
+            <table style={{ width: '100%', fontSize: '8.5pt', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: 'left', fontWeight: 600, color: MUTED, padding: '1px 4px', fontSize: '7pt' }}>Segment</th>
+                  <th style={{ textAlign: 'right', fontWeight: 600, color: MUTED, padding: '1px 4px', fontSize: '7pt' }}>Median</th>
+                </tr>
+              </thead>
+              <tbody>
+                {decomp.map((d) => (
+                  <tr key={d.key} style={{ borderTop: `1px solid ${HAIRLINE}` }}>
+                    <td style={{ padding: '2px 4px', color: '#334155' }}>{d.label}</td>
+                    <td style={{ padding: '2px 4px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: d.key === bn?.key ? 700 : 400, color: d.key === bn?.key ? BRAND_RED : INK }}>
+                      {d.stats ? `${num(d.stats.median)}d` : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {bn && (
+              <p style={{ fontSize: '7.5pt', color: MUTED, marginTop: 4 }}>
+                Bottleneck: <strong style={{ color: BRAND_RED }}>{bn.label}</strong>
+              </p>
+            )}
+          </div>
+        </div>
 
-        {/* Velocity */}
-        <SectionHeading>Velocity decomposition</SectionHeading>
-        <table style={{ width: '100%', fontSize: 10, borderCollapse: 'collapse', marginBottom: 8 }}>
-          <tbody>
-            {decomp.map((d) => (
-              <tr key={d.key}>
-                <td style={{ padding: '1px 4px', width: 160, color: '#475569' }}>{d.label}</td>
-                <td style={{ padding: '1px 4px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: d.key === bn?.key ? '#dc2626' : '#334155' }}>
-                  {d.stats ? `${num(d.stats.median)}d` : '—'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {bn && <p style={{ fontSize: 10, color: '#64748b' }}>Bottleneck: <strong style={{ color: '#dc2626' }}>{bn.label}</strong></p>}
+        {/* Footer */}
+        <div style={{ marginTop: 16, borderTop: `2px solid ${STRONG_BLACK}`, paddingTop: 6, display: 'flex', justifyContent: 'space-between', fontSize: '7pt', color: MUTED }}>
+          <span>TA Command Centre · AMNS India · Confidential</span>
+          <span>All data processed in-browser · Zero egress</span>
+        </div>
       </div>
 
-      {/* One page per HR Head */}
+      {/* ── One page per HR Head ───────────────────────────────── */}
       {heads.map((head) => (
         <HeadPage key={head} head={head} label={label(head)} allRows={result.rows} reveal={reveal} />
       ))}
@@ -165,72 +223,69 @@ function HeadPage({ head, label: headLabel, allRows, reveal }: {
 
   return (
     <div className="print-page" style={{ pageBreakBefore: 'always' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-        <h1 style={{ fontSize: 16, fontWeight: 700 }}>{headLabel} — Review</h1>
-        <span style={{ fontSize: 10, color: '#94a3b8' }}>{num(scope.length)} reqs · scope vs org baseline</span>
-      </div>
+      <BrandHeader
+        title={`${headLabel} — Review`}
+        subtitle={`${num(scope.length)} requisitions · scope vs org baseline · ArcelorMittal Nippon Steel India`}
+      />
 
       {/* Scorecard vs baseline */}
-      <SectionHeading>Scorecard vs baseline</SectionHeading>
-      <table style={{ width: '100%', fontSize: 10, borderCollapse: 'collapse', marginBottom: 12 }}>
+      <SectionTitle>Scorecard vs baseline</SectionTitle>
+      <table style={{ width: '100%', fontSize: '8.5pt', borderCollapse: 'collapse', marginBottom: 4 }}>
         <thead>
-          <tr style={{ color: '#94a3b8' }}>
-            <th style={{ textAlign: 'left', fontWeight: 500, padding: '2px 4px' }}>KPI</th>
-            <th style={{ textAlign: 'right', fontWeight: 500, padding: '2px 4px' }}>This head</th>
-            <th style={{ textAlign: 'right', fontWeight: 500, padding: '2px 4px' }}>Org baseline</th>
-            <th style={{ textAlign: 'right', fontWeight: 500, padding: '2px 4px' }}>Variance</th>
+          <tr style={{ background: '#f8fafc' }}>
+            <th style={{ textAlign: 'left', fontWeight: 600, color: MUTED, padding: '3px 5px', fontSize: '7pt', textTransform: 'uppercase' }}>KPI</th>
+            <th style={{ textAlign: 'right', fontWeight: 600, color: MUTED, padding: '3px 5px', fontSize: '7pt', textTransform: 'uppercase' }}>This head</th>
+            <th style={{ textAlign: 'right', fontWeight: 600, color: MUTED, padding: '3px 5px', fontSize: '7pt', textTransform: 'uppercase' }}>Org baseline</th>
+            <th style={{ textAlign: 'right', fontWeight: 600, color: MUTED, padding: '3px 5px', fontSize: '7pt', textTransform: 'uppercase' }}>Variance</th>
           </tr>
         </thead>
         <tbody>
           {cmp.map((c) => {
             const v = variance(c);
             return (
-              <tr key={c.key} style={{ borderTop: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '3px 4px', color: '#334155' }}>{c.label}</td>
-                <td style={{ padding: '3px 4px', textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{fmtCmp(c.scope, c.unit)}</td>
-                <td style={{ padding: '3px 4px', textAlign: 'right', color: '#64748b', fontVariantNumeric: 'tabular-nums' }}>{fmtCmp(c.baseline, c.unit)}</td>
-                <td style={{ padding: '3px 4px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                  <span style={v.tone ? { color: v.tone.replace('color: ', '') } : undefined}>{v.label}</span>
-                </td>
+              <tr key={c.key} style={{ borderTop: `1px solid ${HAIRLINE}` }}>
+                <td style={{ padding: '3px 5px', color: '#334155' }}>{c.label}</td>
+                <td style={{ padding: '3px 5px', textAlign: 'right', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: INK }}>{fmtCmp(c.scope, c.unit)}</td>
+                <td style={{ padding: '3px 5px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: MUTED }}>{fmtCmp(c.baseline, c.unit)}</td>
+                <td style={{ padding: '3px 5px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: v.color }}>{v.label}</td>
               </tr>
             );
           })}
         </tbody>
       </table>
 
-      {/* Per-BU + per-Function side by side */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+      {/* Per-BU + per-Function */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 4 }}>
         <div style={{ flex: 1 }}>
-          <SectionHeading>Per Business Unit</SectionHeading>
+          <SectionTitle>Per Business Unit</SectionTitle>
           <GroupTable rows={buScores} />
         </div>
         <div style={{ flex: 1 }}>
-          <SectionHeading>Per Function</SectionHeading>
+          <SectionTitle>Per Function</SectionTitle>
           <GroupTable rows={fnScores} />
         </div>
       </div>
 
-      {/* Worklists side by side */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+      {/* Worklists */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 4 }}>
         <div style={{ flex: 1 }}>
-          <SectionHeading>Aged-open worklist (&gt;90d)</SectionHeading>
+          <SectionTitle>Aged-open worklist (&gt;90d)</SectionTitle>
           {aged.length === 0 ? (
-            <p style={{ fontSize: 10, color: '#94a3b8' }}>No open reqs over 90 days.</p>
+            <p style={{ fontSize: '8pt', color: MUTED }}>No open reqs over 90 days. ✓</p>
           ) : (
-            <table style={{ width: '100%', fontSize: 9, borderCollapse: 'collapse' }}>
-              <thead><tr style={{ color: '#94a3b8' }}>
-                <th style={{ textAlign: 'left', fontWeight: 500, padding: '1px 3px' }}>Req</th>
-                <th style={{ textAlign: 'left', fontWeight: 500, padding: '1px 3px' }}>BU</th>
-                <th style={{ textAlign: 'left', fontWeight: 500, padding: '1px 3px' }}>Stage</th>
-                <th style={{ textAlign: 'right', fontWeight: 500, padding: '1px 3px' }}>Age</th>
+            <table style={{ width: '100%', fontSize: '8pt', borderCollapse: 'collapse' }}>
+              <thead><tr>
+                {['Req', 'BU', 'Stage', 'Age'].map((h) => (
+                  <th key={h} style={{ textAlign: h === 'Age' ? 'right' : 'left', fontWeight: 600, color: MUTED, padding: '1px 3px', fontSize: '7pt', textTransform: 'uppercase' }}>{h}</th>
+                ))}
               </tr></thead>
               <tbody>
                 {aged.map((a) => (
-                  <tr key={a.i} style={{ borderTop: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '1px 3px', color: '#475569' }}>{a.reqId ?? `#${a.i}`}</td>
-                    <td style={{ padding: '1px 3px', color: '#475569' }}>{a.businessUnit ?? '—'}</td>
-                    <td style={{ padding: '1px 3px', color: '#475569' }}>{a.stage ?? '—'}</td>
-                    <td style={{ padding: '1px 3px', textAlign: 'right', color: '#dc2626', fontVariantNumeric: 'tabular-nums' }}>{num(a.ageDays)}d</td>
+                  <tr key={a.i} style={{ borderTop: `1px solid ${HAIRLINE}` }}>
+                    <td style={{ padding: '1.5px 3px', color: '#334155' }}>{a.reqId ?? `#${a.i}`}</td>
+                    <td style={{ padding: '1.5px 3px', color: MUTED }}>{a.businessUnit ?? '—'}</td>
+                    <td style={{ padding: '1.5px 3px', color: MUTED }}>{a.stage ?? '—'}</td>
+                    <td style={{ padding: '1.5px 3px', textAlign: 'right', color: BRAND_RED, fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>{num(a.ageDays)}d</td>
                   </tr>
                 ))}
               </tbody>
@@ -238,24 +293,23 @@ function HeadPage({ head, label: headLabel, allRows, reveal }: {
           )}
         </div>
         <div style={{ flex: 1 }}>
-          <SectionHeading>TBO worklist</SectionHeading>
+          <SectionTitle>TBO worklist</SectionTitle>
           {tbo.length === 0 ? (
-            <p style={{ fontSize: 10, color: '#94a3b8' }}>No TBO in this scope.</p>
+            <p style={{ fontSize: '8pt', color: MUTED }}>No TBO in this scope. ✓</p>
           ) : (
-            <table style={{ width: '100%', fontSize: 9, borderCollapse: 'collapse' }}>
-              <thead><tr style={{ color: '#94a3b8' }}>
-                <th style={{ textAlign: 'left', fontWeight: 500, padding: '1px 3px' }}>Req</th>
-                <th style={{ textAlign: 'left', fontWeight: 500, padding: '1px 3px' }}>BU</th>
-                <th style={{ textAlign: 'right', fontWeight: 500, padding: '1px 3px' }}>TBO age</th>
-                <th style={{ textAlign: 'left', fontWeight: 500, padding: '1px 3px' }}>Recruiter</th>
+            <table style={{ width: '100%', fontSize: '8pt', borderCollapse: 'collapse' }}>
+              <thead><tr>
+                {['Req', 'BU', 'TBO age', 'Recruiter'].map((h, i) => (
+                  <th key={h} style={{ textAlign: i === 2 ? 'right' : 'left', fontWeight: 600, color: MUTED, padding: '1px 3px', fontSize: '7pt', textTransform: 'uppercase' }}>{h}</th>
+                ))}
               </tr></thead>
               <tbody>
                 {tbo.map((t) => (
-                  <tr key={t.i} style={{ borderTop: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '1px 3px', color: '#475569' }}>{t.reqId ?? `#${t.i}`}</td>
-                    <td style={{ padding: '1px 3px', color: '#475569' }}>{t.businessUnit ?? '—'}</td>
-                    <td style={{ padding: '1px 3px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{t.tboAgeingDays !== null ? `${num(t.tboAgeingDays)}d` : '—'}</td>
-                    <td style={{ padding: '1px 3px', color: '#475569' }}>{maskValue(t.recruiter, true, reveal)}</td>
+                  <tr key={t.i} style={{ borderTop: `1px solid ${HAIRLINE}` }}>
+                    <td style={{ padding: '1.5px 3px', color: '#334155' }}>{t.reqId ?? `#${t.i}`}</td>
+                    <td style={{ padding: '1.5px 3px', color: MUTED }}>{t.businessUnit ?? '—'}</td>
+                    <td style={{ padding: '1.5px 3px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{t.tboAgeingDays !== null ? `${num(t.tboAgeingDays)}d` : '—'}</td>
+                    <td style={{ padding: '1.5px 3px', color: MUTED }}>{maskValue(t.recruiter, true, reveal)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -265,58 +319,43 @@ function HeadPage({ head, label: headLabel, allRows, reveal }: {
       </div>
 
       {/* Drop analysis */}
-      <SectionHeading>Drop analysis</SectionHeading>
-      <p style={{ fontSize: 10, color: '#475569', marginBottom: 4 }}>
+      <SectionTitle>Drop analysis</SectionTitle>
+      <p style={{ fontSize: '8.5pt', color: '#334155', marginBottom: 3 }}>
         <strong>{num(drops.count)}</strong> drop(s) · {pct(drops.rate * 100)} of scope
+        {drops.reasons.length > 0 && (
+          <span style={{ color: MUTED }}> — {drops.reasons.slice(0, 8).map((r) => `${r.key} ×${r.count}`).join(' · ')}</span>
+        )}
       </p>
-      {drops.reasons.length > 0 && (
-        <p style={{ fontSize: 9, color: '#64748b' }}>
-          {drops.reasons.slice(0, 8).map((r) => `${r.key} ×${r.count}`).join(' · ')}
-        </p>
-      )}
+
+      {/* Footer */}
+      <div style={{ marginTop: 12, borderTop: `2px solid ${STRONG_BLACK}`, paddingTop: 5, display: 'flex', justifyContent: 'space-between', fontSize: '7pt', color: MUTED }}>
+        <span>TA Command Centre · AMNS India · Confidential</span>
+        <span>All data processed in-browser · Zero egress</span>
+      </div>
     </div>
   );
 }
 
 function GroupTable({ rows }: { rows: GroupScorecard[] }) {
-  if (rows.length === 0) return <p style={{ fontSize: 10, color: '#94a3b8' }}>No data.</p>;
+  if (rows.length === 0) return <p style={{ fontSize: '8pt', color: MUTED }}>No data.</p>;
   return (
-    <table style={{ width: '100%', fontSize: 9, borderCollapse: 'collapse' }}>
-      <thead><tr style={{ color: '#94a3b8' }}>
-        <th style={{ textAlign: 'left', fontWeight: 500, padding: '1px 3px' }}>Group</th>
-        <th style={{ textAlign: 'right', fontWeight: 500, padding: '1px 3px' }}>Reqs</th>
-        <th style={{ textAlign: 'right', fontWeight: 500, padding: '1px 3px' }}>TTF</th>
-        <th style={{ textAlign: 'right', fontWeight: 500, padding: '1px 3px' }}>Accept</th>
-        <th style={{ textAlign: 'right', fontWeight: 500, padding: '1px 3px' }}>Drop</th>
+    <table style={{ width: '100%', fontSize: '8pt', borderCollapse: 'collapse' }}>
+      <thead><tr>
+        {['Group', 'Reqs', 'TTF', 'Accept', 'Drop'].map((h, i) => (
+          <th key={h} style={{ textAlign: i === 0 ? 'left' : 'right', fontWeight: 600, color: MUTED, padding: '1px 3px', fontSize: '7pt', textTransform: 'uppercase' }}>{h}</th>
+        ))}
       </tr></thead>
       <tbody>
         {rows.slice(0, 8).map((g) => (
-          <tr key={g.group} style={{ borderTop: '1px solid #f1f5f9' }}>
-            <td style={{ padding: '1px 3px', color: '#475569' }}>{g.group}</td>
-            <td style={{ padding: '1px 3px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{num(g.n)}</td>
-            <td style={{ padding: '1px 3px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{g.medianTtf !== null ? `${num(g.medianTtf)}d` : '—'}</td>
-            <td style={{ padding: '1px 3px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{pct(g.acceptance * 100)}</td>
-            <td style={{ padding: '1px 3px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{pct(g.dropRate * 100)}</td>
+          <tr key={g.group} style={{ borderTop: `1px solid ${HAIRLINE}` }}>
+            <td style={{ padding: '1.5px 3px', color: '#334155' }}>{g.group}</td>
+            <td style={{ padding: '1.5px 3px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{num(g.n)}</td>
+            <td style={{ padding: '1.5px 3px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{g.medianTtf !== null ? `${num(g.medianTtf)}d` : '—'}</td>
+            <td style={{ padding: '1.5px 3px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{pct(g.acceptance * 100)}</td>
+            <td style={{ padding: '1.5px 3px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{pct(g.dropRate * 100)}</td>
           </tr>
         ))}
       </tbody>
     </table>
-  );
-}
-
-function Kpi({ label, value }: { label: string; value: string }) {
-  return (
-    <td style={{ padding: '4px 6px' }}>
-      <div style={{ fontSize: 9, fontWeight: 500, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-      <div style={{ fontSize: 16, fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: '#0f172a' }}>{value}</div>
-    </td>
-  );
-}
-
-function SectionHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#475569', marginBottom: 4, marginTop: 4 }}>
-      {children}
-    </h2>
   );
 }

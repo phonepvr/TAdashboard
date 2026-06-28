@@ -3,13 +3,14 @@
 @tailwind utilities;
 
 :root {
-  /* Fixed locale + calm light surface. Fonts are the system stack (zero network). */
   color-scheme: light;
-  --surface: 248 250 252; /* slate-50  */
+  --surface: 248 248 248;   /* near-white */
   --panel: 255 255 255;
-  --ink: 15 23 42; /* slate-900 */
-  --muted: 100 116 139; /* slate-500 */
-  --hairline: 226 232 240; /* slate-200 */
+  --ink: 15 23 42;           /* slate-900 */
+  --muted: 100 116 139;      /* slate-500 */
+  --hairline: 226 232 240;   /* slate-200 */
+  --brand: 229 39 38;        /* AM/NS Smart Red */
+  --brand-dark: 204 20 20;
 }
 
 html,
@@ -23,42 +24,60 @@ body {
   background: rgb(var(--surface));
   color: rgb(var(--ink));
   font-family: theme('fontFamily.sans');
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  letter-spacing: 0.01em;
 }
 
 @layer components {
   .card {
-    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+    @apply rounded-md border border-slate-200 bg-white shadow-sm;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium
-      transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500
-      focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded px-3.5 py-2 text-sm font-semibold
+      tracking-wide transition-colors focus:outline-none focus-visible:ring-2
+      focus-visible:ring-brand-500 focus-visible:ring-offset-1
+      disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-brand-600 text-white hover:bg-brand-700;
+    @apply btn bg-brand-500 text-white hover:bg-brand-600;
   }
   .btn-ghost {
-    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+    @apply btn border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 hover:border-slate-400;
   }
   .btn-danger {
     @apply btn border border-critical-500 bg-white text-critical-600 hover:bg-critical-50;
   }
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold tracking-wide;
   }
   .tabular {
     font-variant-numeric: tabular-nums;
   }
+  /* AM/NS Stroke: forward diagonal accent derived from the brand logo. */
+  .amns-stroke {
+    position: relative;
+    overflow: hidden;
+  }
+  .amns-stroke::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: 0;
+    bottom: 0;
+    width: 28px;
+    background: #e52726;
+    transform: skewX(-12deg);
+  }
 }
 
-/* Print-only content: hidden on screen, shown in print. */
+/* Print-only content: hidden on screen, shown during print. */
 .print-only {
   display: none !important;
 }
 
-/* One-pager print: hide app chrome, flatten cards. */
+/* ── Print ─────────────────────────────────────────────── */
 @media print {
   .no-print {
     display: none !important;
@@ -68,6 +87,8 @@ body {
   }
   body {
     background: #fff;
+    font-size: 11pt;
+    color: #0f172a;
   }
   .card {
     box-shadow: none !important;
@@ -84,5 +105,52 @@ body {
   body.print-report-active #exec-summary,
   body.print-report-active .no-print {
     display: none !important;
+  }
+
+  /* Print report: AM/NS brand header */
+  .print-brand-header {
+    display: flex;
+    align-items: stretch;
+    background: #000;
+    color: #fff;
+    margin-bottom: 16px;
+    min-height: 36pt;
+  }
+  .print-brand-header__text {
+    flex: 1;
+    padding: 8pt 12pt;
+  }
+  .print-brand-header__title {
+    font-size: 14pt;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #fff;
+    margin: 0 0 1pt;
+  }
+  .print-brand-header__sub {
+    font-size: 7pt;
+    font-weight: 400;
+    color: rgba(255,255,255,0.65);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .print-brand-stroke {
+    width: 24pt;
+    background: #e52726;
+    transform: skewX(-10deg);
+    margin-right: -8pt;
+    flex-shrink: 0;
+  }
+  .print-section-title {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #e52726;
+    border-bottom: 1pt solid #e52726;
+    margin: 10pt 0 4pt;
+    padding-bottom: 2pt;
   }
 }
