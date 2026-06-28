@@ -18,16 +18,20 @@ import {
   velocityDecomposition,
   type DurationStats,
 } from '../domain/metrics';
-import { Bar, Card, SectionTitle } from './components';
+import { Bar, Card, InfoTip, SectionTitle } from './components';
+import { FORMULAS } from './definitions';
 import { num, pct } from './format';
 
 const dur = (s: DurationStats | null) => (s ? `${num(s.median)}d` : '—');
 const sub = (s: DurationStats | null) => (s ? `p25–p75 ${num(s.p25)}–${num(s.p75)} · n=${num(s.n)}` : 'n=0');
 
-function CycleCard({ label, stats }: { label: string; stats: DurationStats | null }) {
+function CycleCard({ label, stats, info }: { label: string; stats: DurationStats | null; info?: string }) {
   return (
     <div className="card p-3">
-      <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+        <span>{label}</span>
+        {info && <InfoTip text={info} />}
+      </div>
       <div className="tabular mt-1 text-xl font-semibold text-slate-900">{dur(stats)}</div>
       <div className="text-[11px] text-slate-400">{sub(stats)}</div>
     </div>
@@ -52,18 +56,18 @@ export function FunnelView() {
     <div className="mx-auto grid max-w-6xl gap-5 px-4 py-5">
       {/* Cycle-time cards */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <CycleCard label="Time to Fill" stats={ttf} />
-        <CycleCard label="Time to Offer" stats={timeToOffer(rows)} />
-        <CycleCard label="Offer → Accept" stats={offerToAccept(rows)} />
-        <CycleCard label="Accept → Join" stats={acceptToJoin(rows)} />
-        <CycleCard label="Intake lag" stats={intakeLag(rows)} />
-        <CycleCard label="Offer-approval cycle" stats={offerApprovalCycle(rows)} />
+        <CycleCard label="Time to Fill" stats={ttf} info={FORMULAS.medianTtf} />
+        <CycleCard label="Time to Offer" stats={timeToOffer(rows)} info={FORMULAS.timeToOffer} />
+        <CycleCard label="Offer → Accept" stats={offerToAccept(rows)} info={FORMULAS.offerToAccept} />
+        <CycleCard label="Accept → Join" stats={acceptToJoin(rows)} info={FORMULAS.acceptToJoin} />
+        <CycleCard label="Intake lag" stats={intakeLag(rows)} info={FORMULAS.intakeLag} />
+        <CycleCard label="Offer-approval cycle" stats={offerApprovalCycle(rows)} info={FORMULAS.offerApprovalCycle} />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
         {/* TTF distribution */}
         <Card>
-          <SectionTitle hint="30-day bins; median marked in cards above">TTF distribution</SectionTitle>
+          <SectionTitle hint="30-day bins; median marked in cards above" info={FORMULAS.ttfDistribution}>TTF distribution</SectionTitle>
           <div className="h-56" role="img" aria-label={`Time-to-fill distribution histogram in 30-day bins across ${hist.reduce((a, b) => a + b.count, 0)} joined requisitions.`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={hist} margin={{ top: 8, right: 12, bottom: 0, left: -20 }}>
@@ -79,7 +83,7 @@ export function FunnelView() {
 
         {/* Stage-dwell waterfall */}
         <Card>
-          <SectionTitle hint="median days per segment — bottleneck in red">Stage dwell</SectionTitle>
+          <SectionTitle hint="median days per segment — bottleneck in red" info={FORMULAS.velocityDecomp}>Stage dwell</SectionTitle>
           <div className="grid gap-2">
             {decomp.map((d) => (
               <div key={d.key} className="grid grid-cols-12 items-center gap-2">
@@ -96,7 +100,7 @@ export function FunnelView() {
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Full funnel + yield */}
         <Card>
-          <SectionTitle hint="reached-stage counts + yield">Funnel &amp; yield</SectionTitle>
+          <SectionTitle hint="reached-stage counts + yield" info={FORMULAS.funnel}>Funnel &amp; yield</SectionTitle>
           <div className="grid gap-2">
             {funnel(rows).map((s) => (
               <div key={s.key} className="grid grid-cols-12 items-center gap-2">
@@ -110,7 +114,7 @@ export function FunnelView() {
 
         {/* TTF by level */}
         <Card>
-          <SectionTitle hint="median TTF by grade (n-shown)">TTF by level</SectionTitle>
+          <SectionTitle hint="median TTF by grade (n-shown)" info={FORMULAS.ttfByLevel}>TTF by level</SectionTitle>
           {byLevel.length === 0 ? (
             <p className="text-xs text-slate-400">No level data.</p>
           ) : (

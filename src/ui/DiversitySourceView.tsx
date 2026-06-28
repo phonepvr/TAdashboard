@@ -13,6 +13,7 @@ import {
   type GenderRatio,
 } from '../domain/metrics';
 import { Bar, Card, SectionTitle, Stat } from './components';
+import { FORMULAS } from './definitions';
 import { num, pct } from './format';
 
 function GenderRow({ label, g, small }: { label: string; g: GenderRatio; small?: boolean }) {
@@ -51,15 +52,15 @@ export function DiversitySourceView() {
   return (
     <div className="mx-auto grid max-w-6xl gap-5 px-4 py-5">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="Female (known)" value={pct(overall.femaleShareKnown * 100)} sub={`${num(overall.female)} of ${num(overall.male + overall.female)}`} />
-        <Stat label="Unknown gender" value={pct(overall.unknownShare * 100)} sub="excluded from 'known'" />
-        <Stat label="Joined female" value={pct(jvp.joined.femaleShareKnown * 100)} sub={`pipeline ${pct(jvp.pipeline.femaleShareKnown * 100)}`} />
-        <Stat label="Referral share" value={pct(referralShare(rows) * 100)} sub="of source mix" />
+        <Stat label="Female (known)" value={pct(overall.femaleShareKnown * 100)} sub={`${num(overall.female)} of ${num(overall.male + overall.female)}`} info={FORMULAS.femaleShare} />
+        <Stat label="Unknown gender" value={pct(overall.unknownShare * 100)} sub="excluded from 'known'" info={FORMULAS.unknownGender} />
+        <Stat label="Joined female" value={pct(jvp.joined.femaleShareKnown * 100)} sub={`pipeline ${pct(jvp.pipeline.femaleShareKnown * 100)}`} info={FORMULAS.joinedFemale} />
+        <Stat label="Referral share" value={pct(referralShare(rows) * 100)} sub="of source mix" info={FORMULAS.referralShare} />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
-          <SectionTitle hint="female share of known at each stage reached">Representation across funnel</SectionTitle>
+          <SectionTitle hint="female share of known at each stage reached" info={FORMULAS.funnelRepresentation}>Representation across funnel</SectionTitle>
           <div className="grid gap-2">
             {funnelRep.map((f) => (
               <div key={f.key} className="grid grid-cols-12 items-center gap-2">
@@ -71,7 +72,7 @@ export function DiversitySourceView() {
           </div>
         </Card>
         <Card>
-          <SectionTitle hint="brand=F · grey=M · light=Unknown">Gender by slice</SectionTitle>
+          <SectionTitle hint="brand=F · grey=M · light=Unknown" info={FORMULAS.genderBySlice}>Gender by slice</SectionTitle>
           <GenderRow label="Overall" g={overall} />
           <div className="mt-2 text-[11px] font-medium uppercase tracking-wide text-slate-400">By BU</div>
           <div className="grid gap-1.5">{byBu.map((s) => <GenderRow key={s.group} label={s.group} g={s} small />)}</div>
@@ -82,7 +83,7 @@ export function DiversitySourceView() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
-          <SectionTitle>Source mix</SectionTitle>
+          <SectionTitle info={FORMULAS.sourceMix}>Source mix</SectionTitle>
           <div className="grid gap-1.5">
             {mix.map((b) => (
               <div key={b.key} className="grid grid-cols-12 items-center gap-2">
@@ -94,7 +95,7 @@ export function DiversitySourceView() {
           </div>
         </Card>
         <Card>
-          <SectionTitle hint="which channel is faster / stickier">Source effectiveness</SectionTitle>
+          <SectionTitle hint="which channel is faster / stickier" info={FORMULAS.sourceEffectiveness}>Source effectiveness</SectionTitle>
           <table className="w-full text-xs">
             <thead className="text-slate-400"><tr><th className="text-left font-medium">Source</th><th className="text-right font-medium">Reqs</th><th className="text-right font-medium">Join rate</th><th className="text-right font-medium">Median TTF</th></tr></thead>
             <tbody>

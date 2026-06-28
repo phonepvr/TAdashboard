@@ -11,7 +11,8 @@ import type { ConsistencyIssue, DataQualityReport, LogicalRole, RawRow } from '.
 import { ROLE_BY_KEY } from '../domain/schema';
 import { defaultWindow, formatISO, parseDateCell } from '../domain/dates';
 import { normStr } from '../domain/normalize';
-import { Bar, Card, Chip, ScoreBadge, SectionTitle, Stat } from './components';
+import { Bar, Card, Chip, InfoTip, ScoreBadge, SectionTitle, Stat } from './components';
+import { FORMULAS } from './definitions';
 import { num, pct } from './format';
 import { maskValue } from './mask';
 
@@ -92,18 +93,21 @@ export function DataQualityReadout() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <Stat label="Rows in" value={num(dedup.inputRows)} sub={`${num(profile.columns.length)} columns`} />
-        <Stat label="After de-dup" value={num(dedup.outputRows)} sub={`${num(dedup.rowsDropped)} merged · ${num(dedup.duplicateGroups)} dup groups`} />
-        <Stat label="Blank / placeholder IDs" value={num(dedup.blankIdRows)} sub={`${num(dedup.highFrequencyIds)} placeholder code(s)`} />
-        <Stat label="Broken columns" value={num(dq.broken.length)} sub="excluded from metrics" />
+        <Stat label="Rows in" value={num(dedup.inputRows)} sub={`${num(profile.columns.length)} columns`} info={FORMULAS.rowsIn} />
+        <Stat label="After de-dup" value={num(dedup.outputRows)} sub={`${num(dedup.rowsDropped)} merged · ${num(dedup.duplicateGroups)} dup groups`} info={FORMULAS.afterDedup} />
+        <Stat label="Blank / placeholder IDs" value={num(dedup.blankIdRows)} sub={`${num(dedup.highFrequencyIds)} placeholder code(s)`} info={FORMULAS.blankIds} />
+        <Stat label="Broken columns" value={num(dq.broken.length)} sub="excluded from metrics" info={FORMULAS.brokenColumns} />
         <div className="card flex flex-col justify-center p-4">
-          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Data-quality score</div>
+          <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500">
+            <span>Data-quality score</span>
+            <InfoTip text={FORMULAS.dqScore} />
+          </div>
           <div className="mt-1"><ScoreBadge score={dq.score.overall} /></div>
         </div>
       </div>
 
       <Card>
-        <SectionTitle hint="transparent formula: 0.5×completeness + 0.3×validity + 0.2×consistency">Score breakdown</SectionTitle>
+        <SectionTitle hint="transparent formula: 0.5×completeness + 0.3×validity + 0.2×consistency" info={FORMULAS.dqScore}>Score breakdown</SectionTitle>
         <div className="grid gap-3 md:grid-cols-3">
           {(['completeness', 'validity', 'consistency'] as const).map((kk) => (
             <div key={kk}>
@@ -119,7 +123,7 @@ export function DataQualityReadout() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
-          <SectionTitle hint="worst-first">Field completeness</SectionTitle>
+          <SectionTitle hint="worst-first" info={FORMULAS.completeness}>Field completeness</SectionTitle>
           <div className="grid max-h-96 gap-1.5 overflow-y-auto pr-1">
             {dq.completeness.map((c) => (
               <div key={c.role} className="grid grid-cols-12 items-center gap-2">
@@ -137,7 +141,7 @@ export function DataQualityReadout() {
         </Card>
 
         <Card>
-          <SectionTitle hint="valid · missing · invalid (epoch/out-of-range/junk)">Date health</SectionTitle>
+          <SectionTitle hint="valid · missing · invalid (epoch/out-of-range/junk)" info={FORMULAS.dateHealth}>Date health</SectionTitle>
           <div className="grid max-h-96 gap-1.5 overflow-y-auto pr-1">
             {dq.dateHealth.map((d) => {
               const total = d.valid + d.missing + d.invalid || 1;
@@ -162,7 +166,7 @@ export function DataQualityReadout() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
-          <SectionTitle hint="unmapped raw tokens — fix in mapping or at source">Controlled-vocabulary violations</SectionTitle>
+          <SectionTitle hint="unmapped raw tokens — fix in mapping or at source" info={FORMULAS.vocabViolations}>Controlled-vocabulary violations</SectionTitle>
           {dq.vocab.length === 0 ? (
             <p className="text-sm text-slate-400">No vocabulary violations detected. ✓</p>
           ) : (
@@ -185,7 +189,7 @@ export function DataQualityReadout() {
 
         <div className="grid gap-5">
           <Card>
-            <SectionTitle>Broken columns (excluded)</SectionTitle>
+            <SectionTitle info={FORMULAS.brokenColumns}>Broken columns (excluded)</SectionTitle>
             {dq.broken.length === 0 ? (
               <p className="text-sm text-slate-400">None.</p>
             ) : (
@@ -198,7 +202,7 @@ export function DataQualityReadout() {
           </Card>
 
           <Card>
-            <SectionTitle hint="click to drill to the offending rows (local, masked)">Cross-field consistency</SectionTitle>
+            <SectionTitle hint="click to drill to the offending rows (local, masked)" info={FORMULAS.consistency}>Cross-field consistency</SectionTitle>
             {dq.consistency.length === 0 ? (
               <p className="text-sm text-slate-400">No sequence anomalies detected. ✓</p>
             ) : (

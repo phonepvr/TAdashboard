@@ -13,6 +13,7 @@ import {
 } from '../domain/metrics';
 import { formatISO } from '../domain/dates';
 import { Bar, Card, SectionTitle, Stat } from './components';
+import { FORMULAS } from './definitions';
 import { num, pct } from './format';
 import { maskValue } from './mask';
 
@@ -37,15 +38,15 @@ export function AgeingView() {
   return (
     <div className="mx-auto grid max-w-6xl gap-5 px-4 py-5">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="Open" value={num(snap.open)} />
-        <Stat label="Aged > 180d" value={num(rows.filter((r) => r.isOpen && (r.num.ageingDays ?? 0) > 180).length)} />
-        <Stat label="TBO" value={num(snap.tbo)} sub="awaiting join" />
-        <Stat label="SLA > 90d breach" value={pct(slaBreach(rows, 90).share * 100)} sub="of joined" />
+        <Stat label="Open" value={num(snap.open)} info={FORMULAS.open} />
+        <Stat label="Aged > 180d" value={num(rows.filter((r) => r.isOpen && (r.num.ageingDays ?? 0) > 180).length)} info={FORMULAS.agedOver180} />
+        <Stat label="TBO" value={num(snap.tbo)} sub="awaiting join" info={FORMULAS.tbo} />
+        <Stat label="SLA > 90d breach" value={pct(slaBreach(rows, 90).share * 100)} sub="of joined" info={FORMULAS.slaBreach} />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
-          <SectionTitle hint="open reqs, recomputed canonical buckets">Ageing distribution</SectionTitle>
+          <SectionTitle hint="open reqs, recomputed canonical buckets" info={FORMULAS.ageingDistribution}>Ageing distribution</SectionTitle>
           <div className="grid gap-1.5">
             {ageDist.map((b) => (
               <div key={b.key} className="grid grid-cols-12 items-center gap-2">
@@ -57,7 +58,7 @@ export function AgeingView() {
           </div>
         </Card>
         <Card>
-          <SectionTitle hint="why open reqs are stuck">Ageing-reason Pareto</SectionTitle>
+          <SectionTitle hint="why open reqs are stuck" info={FORMULAS.ageingReasonPareto}>Ageing-reason Pareto</SectionTitle>
           {reasons.length === 0 ? <p className="text-xs text-slate-400">No reasons recorded.</p> : (
             <div className="grid gap-1.5">
               {reasons.map((b) => (
@@ -73,7 +74,7 @@ export function AgeingView() {
       </div>
 
       <Card>
-        <SectionTitle hint="open > 90 days, oldest first">Aged-open worklist</SectionTitle>
+        <SectionTitle hint="open > 90 days, oldest first" info={FORMULAS.agedWorklist}>Aged-open worklist</SectionTitle>
         {aged.length === 0 ? <p className="text-xs text-slate-400">No open reqs over 90 days. ✓</p> : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
@@ -97,7 +98,7 @@ export function AgeingView() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
-          <SectionTitle hint="recomputed (ignores 'False' formula leaks)">TBO bucket distribution</SectionTitle>
+          <SectionTitle hint="recomputed (ignores 'False' formula leaks)" info={FORMULAS.tboBucket}>TBO bucket distribution</SectionTitle>
           {tboBuckets.length === 0 ? <p className="text-xs text-slate-400">No TBO pipeline.</p> : (
             <div className="grid gap-1.5">
               {tboBuckets.map((b) => (
@@ -114,7 +115,7 @@ export function AgeingView() {
           )}
         </Card>
         <Card>
-          <SectionTitle hint="offer accepted, with a scheduled follow-up">TBO follow-up tracker</SectionTitle>
+          <SectionTitle hint="offer accepted, with a scheduled follow-up" info={FORMULAS.tboFollowUp}>TBO follow-up tracker</SectionTitle>
           {followUps.length === 0 ? <p className="text-xs text-slate-400">No scheduled follow-ups.</p> : (
             <div className="overflow-x-auto">
               <table className="w-full text-xs">

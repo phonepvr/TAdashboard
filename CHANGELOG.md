@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here.
 
+## [1.1.0] — Explain-every-number
+
+### Added
+- An accessible **ⓘ info tooltip** on every metric card (KPI cards, “what
+  changed” deltas, cycle-time cards, section headers across all views, and the
+  Data-Quality cards) that reveals the **exact formula / logic** for that number
+  or ratio. Backed by a central `definitions.ts` registry so wording stays
+  consistent. Pure CSS (hover + keyboard focus), CSP-safe, and hidden from
+  PDF/PNG exports.
+
 ## [1.0.0] — Phase 5: Polish (feature-complete)
 
 ### Added

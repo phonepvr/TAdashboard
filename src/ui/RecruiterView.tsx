@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useStore } from '../state/store';
 import { applyFilters, loadDistribution, recruiterProductivity, type RecruiterLoad } from '../domain/metrics';
 import { Card, SectionTitle, Stat } from './components';
+import { FORMULAS } from './definitions';
 import { num } from './format';
 import { maskValue } from './mask';
 
@@ -53,19 +54,19 @@ export function RecruiterView() {
   return (
     <div className="mx-auto grid max-w-6xl gap-5 px-4 py-5">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="Recruiters" value={num(recLoad.recruiters)} />
-        <Stat label="Max load" value={num(recLoad.maxLoad)} sub={`median ${num(recLoad.medianLoad)}`} />
-        <Stat label="RPO leads" value={num(rpoLoad.recruiters)} />
-        <Stat label="RPO max load" value={num(rpoLoad.maxLoad)} sub={`median ${num(rpoLoad.medianLoad)}`} />
+        <Stat label="Recruiters" value={num(recLoad.recruiters)} info={FORMULAS.recruiterCount} />
+        <Stat label="Max load" value={num(recLoad.maxLoad)} sub={`median ${num(recLoad.medianLoad)}`} info={FORMULAS.recruiterMaxLoad} />
+        <Stat label="RPO leads" value={num(rpoLoad.recruiters)} info={FORMULAS.rpoCount} />
+        <Stat label="RPO max load" value={num(rpoLoad.maxLoad)} sub={`median ${num(rpoLoad.medianLoad)}`} info={FORMULAS.rpoMaxLoad} />
       </div>
 
       <Card>
-        <SectionTitle hint="WIP · throughput · median TTF (n≥5) — PII masked">Recruiter productivity</SectionTitle>
+        <SectionTitle hint="WIP · throughput · median TTF (n≥5) — PII masked" info={FORMULAS.recruiterProductivity}>Recruiter productivity</SectionTitle>
         <ProductivityTable rows={recruiters} reveal={reveal} />
       </Card>
 
       <Card>
-        <SectionTitle hint="RPO vendor leads">RPO lead productivity</SectionTitle>
+        <SectionTitle hint="RPO vendor leads" info={FORMULAS.rpoProductivity}>RPO lead productivity</SectionTitle>
         <ProductivityTable rows={rpo} reveal={reveal} />
       </Card>
     </div>

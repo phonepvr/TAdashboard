@@ -29,6 +29,7 @@ import {
   tboLanding,
 } from '../domain/metrics';
 import { Bar, Card, Chip, SectionTitle } from './components';
+import { FORMULAS } from './definitions';
 import { num, pct } from './format';
 
 const AX = { fontSize: 11, fill: '#94a3b8' };
@@ -72,7 +73,7 @@ export function ForecastView() {
 
       {/* Demand forecast */}
       <Card>
-        <SectionTitle hint="3-mo moving average + OLS trend; band = ±1.96σ residual">Demand forecast</SectionTitle>
+        <SectionTitle hint="3-mo moving average + OLS trend; band = ±1.96σ residual" info={FORMULAS.demandForecast}>Demand forecast</SectionTitle>
         <div className="h-64 w-full" role="img" aria-label={`Demand forecast: monthly requisitions received with an OLS trend (slope ${demand.slope.toFixed(1)} per month) and a ${demand.horizon}-month projection with uncertainty band.`}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={demandChart} margin={{ top: 8, right: 16, bottom: 0, left: -16 }}>
@@ -94,7 +95,7 @@ export function ForecastView() {
 
       {/* Projected joins vs demand + fulfilment gap */}
       <Card>
-        <SectionTitle hint="empirical stage→join conversion × current pipeline">Projected joins vs demand</SectionTitle>
+        <SectionTitle hint="empirical stage→join conversion × current pipeline" info={FORMULAS.projectedJoins}>Projected joins vs demand</SectionTitle>
         <div className="grid gap-4 md:grid-cols-3">
           <div className="md:col-span-2 h-52" role="img" aria-label={`Projected joins versus demand baseline over the next ${joins.byMonth.length} months. Total expected joins ${joins.totalExpected}, projected demand ${joins.totalDemand}, fulfilment gap ${joins.gap}.`}>
             <ResponsiveContainer width="100%" height="100%">
@@ -144,7 +145,7 @@ export function ForecastView() {
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Open-req ETA / at-risk */}
         <Card>
-          <SectionTitle hint="past the cohort median TTF = at-risk">At-risk open requisitions</SectionTitle>
+          <SectionTitle hint="past the cohort median TTF = at-risk" info={FORMULAS.atRisk}>At-risk open requisitions</SectionTitle>
           {atRisk.length === 0 ? (
             <p className="text-sm text-slate-400">No open reqs past their cohort median TTF. ✓</p>
           ) : (
@@ -169,7 +170,7 @@ export function ForecastView() {
 
         {/* TBO landing */}
         <Card>
-          <SectionTitle hint="offer-accepted + median accept→join">TBO landing forecast</SectionTitle>
+          <SectionTitle hint="offer-accepted + median accept→join" info={FORMULAS.tboLanding}>TBO landing forecast</SectionTitle>
           <p className="mb-2 text-xs text-slate-500">Median accept→join: <strong>{tbo.medianAcceptToJoin !== null ? `${num(tbo.medianAcceptToJoin)}d` : '—'}</strong></p>
           <div className="grid gap-2">
             {tbo.byMonth.map((m) => (
@@ -186,7 +187,7 @@ export function ForecastView() {
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Diversity trajectory */}
         <Card>
-          <SectionTitle hint="female share (of known) among joins, by month">Diversity trajectory</SectionTitle>
+          <SectionTitle hint="female share (of known) among joins, by month" info={FORMULAS.diversityTrajectory}>Diversity trajectory</SectionTitle>
           {diversity.length < 2 ? (
             <p className="text-sm text-slate-400">Not enough joined-cohort history.</p>
           ) : (
@@ -206,7 +207,7 @@ export function ForecastView() {
 
         {/* Patterns: seasonality + drift + concentration */}
         <Card>
-          <SectionTitle hint="intake shape · TTF drift · WIP concentration">Patterns</SectionTitle>
+          <SectionTitle hint="intake shape · TTF drift · WIP concentration" info={FORMULAS.patterns}>Patterns</SectionTitle>
           <div className="mb-3">
             <div className="mb-1 text-xs font-medium text-slate-500">Seasonality (avg intake by month)</div>
             <div className="flex items-end gap-1">

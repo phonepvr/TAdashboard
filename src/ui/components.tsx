@@ -1,23 +1,54 @@
 /** Small presentational primitives shared across views. */
 import type { ReactNode } from 'react';
 
+/**
+ * Accessible "ⓘ" info tooltip explaining a metric's formula/logic. Pure CSS
+ * (hover + keyboard focus), so it works offline and survives the strict CSP.
+ * Hidden by default → never appears in PNG/PDF exports.
+ */
+export function InfoTip({ text, label }: { text: string; label?: string }) {
+  return (
+    <span className="no-print group relative inline-flex align-middle">
+      <button
+        type="button"
+        aria-label={label ?? 'How this is calculated'}
+        className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-slate-300 text-[9px] font-semibold leading-none text-slate-400 transition-colors hover:border-brand-400 hover:text-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+      >
+        i
+      </button>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute left-1/2 top-full z-30 hidden w-60 -translate-x-1/2 translate-y-1.5 rounded-lg border border-slate-200 bg-white p-2 text-left text-[11px] font-normal normal-case leading-snug tracking-normal text-slate-600 shadow-lg group-hover:block group-focus-within:block"
+      >
+        {text}
+      </span>
+    </span>
+  );
+}
+
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return <div className={`card p-4 ${className}`}>{children}</div>;
 }
 
-export function SectionTitle({ children, hint }: { children: ReactNode; hint?: string }) {
+export function SectionTitle({ children, hint, info }: { children: ReactNode; hint?: string; info?: string }) {
   return (
     <div className="mb-3 flex items-baseline justify-between gap-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">{children}</h2>
+      <h2 className="flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-slate-600">
+        {children}
+        {info && <InfoTip text={info} />}
+      </h2>
       {hint && <span className="text-xs text-slate-400">{hint}</span>}
     </div>
   );
 }
 
-export function Stat({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
+export function Stat({ label, value, sub, info }: { label: string; value: ReactNode; sub?: ReactNode; info?: string }) {
   return (
     <div className="card p-4">
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-slate-500">
+        <span>{label}</span>
+        {info && <InfoTip text={info} label={`How ${label} is calculated`} />}
+      </div>
       <div className="tabular mt-1 text-2xl font-semibold text-slate-900">{value}</div>
       {sub && <div className="mt-1 text-xs text-slate-500">{sub}</div>}
     </div>

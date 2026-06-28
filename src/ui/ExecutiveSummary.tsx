@@ -27,8 +27,9 @@ import {
   whatChanged,
   type ChangeItem,
 } from '../domain/metrics';
-import { Bar, Card, Chip, SectionTitle, Stat } from './components';
+import { Bar, Card, Chip, InfoTip, SectionTitle, Stat } from './components';
 import { ExportBar } from './ExportBar';
+import { FORMULAS } from './definitions';
 import { num, pct } from './format';
 
 function fmt(v: number | null, unit: ChangeItem['unit']): string {
@@ -50,7 +51,10 @@ function ChangeBadge({ item }: { item: ChangeItem }) {
   }
   return (
     <div className="card p-3">
-      <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{item.label}</div>
+      <div className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+        <span>{item.label}</span>
+        <InfoTip text={FORMULAS[`change_${item.key}` as keyof typeof FORMULAS]} />
+      </div>
       <div className="mt-1 flex items-baseline gap-2">
         <span className="tabular text-lg font-semibold text-slate-900">{fmt(current, unit)}</span>
         <span className={`text-xs ${tone === 'good' ? 'text-good-600' : tone === 'critical' ? 'text-critical-600' : 'text-slate-400'}`}>
@@ -90,19 +94,19 @@ export function ExecutiveSummary() {
       </div>
       <div id="exec-summary" className="grid gap-5">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
-        <Stat label="Requisitions" value={num(k.total)} sub={`${num(snap.joined)} joined · ${num(snap.open)} open`} />
-        <Stat label="% Open" value={pct(k.pctOpen * 100)} />
-        <Stat label="Median TTF" value={ttf ? `${num(ttf.median)}d` : '—'} sub={ttf ? `n=${num(ttf.n)}` : 'n=0'} />
-        <Stat label="Offer acceptance" value={pct(k.acceptanceRate * 100)} sub={k.acceptanceLikelyArtifact ? '⚠ artifact' : undefined} />
-        <Stat label="TBO" value={num(snap.tbo)} />
-        <Stat label="Aged > 180d" value={num(aged180)} />
-        <Stat label="Female share" value={pct(k.femaleShareKnown * 100)} sub={`${pct(k.unknownGenderShare * 100)} unknown`} />
-        <Stat label="Top source" value={pct(k.topSourceShare * 100)} />
+        <Stat label="Requisitions" value={num(k.total)} sub={`${num(snap.joined)} joined · ${num(snap.open)} open`} info={FORMULAS.totalReqs} />
+        <Stat label="% Open" value={pct(k.pctOpen * 100)} info={FORMULAS.pctOpen} />
+        <Stat label="Median TTF" value={ttf ? `${num(ttf.median)}d` : '—'} sub={ttf ? `n=${num(ttf.n)}` : 'n=0'} info={FORMULAS.medianTtf} />
+        <Stat label="Offer acceptance" value={pct(k.acceptanceRate * 100)} sub={k.acceptanceLikelyArtifact ? '⚠ artifact' : undefined} info={FORMULAS.offerAcceptance} />
+        <Stat label="TBO" value={num(snap.tbo)} info={FORMULAS.tbo} />
+        <Stat label="Aged > 180d" value={num(aged180)} info={FORMULAS.agedOver180} />
+        <Stat label="Female share" value={pct(k.femaleShareKnown * 100)} sub={`${pct(k.unknownGenderShare * 100)} unknown`} info={FORMULAS.femaleShare} />
+        <Stat label="Top source" value={pct(k.topSourceShare * 100)} info={FORMULAS.topSource} />
       </div>
 
       {/* What changed */}
       <div>
-        <SectionTitle hint="recent vs prior comparable period">What changed</SectionTitle>
+        <SectionTitle hint="recent vs prior comparable period" info="Each tile compares a recent window against the immediately prior window of equal length.">What changed</SectionTitle>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {changes.map((c) => <ChangeBadge key={c.key} item={c} />)}
         </div>
@@ -110,7 +114,7 @@ export function ExecutiveSummary() {
 
       {/* Demand vs supply */}
       <Card>
-        <SectionTitle hint="reqs received vs joins per month">Demand vs supply</SectionTitle>
+        <SectionTitle hint="reqs received vs joins per month" info={FORMULAS.demandVsSupply}>Demand vs supply</SectionTitle>
         <div className="h-64 w-full" role="img" aria-label={`Demand vs supply line chart over ${supply.length} months: requisitions received versus joins per month.`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={supply} margin={{ top: 8, right: 16, bottom: 0, left: -16 }}>
@@ -132,7 +136,7 @@ export function ExecutiveSummary() {
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Funnel snapshot */}
         <Card>
-          <SectionTitle hint="current pipeline by stage reached">Funnel snapshot</SectionTitle>
+          <SectionTitle hint="current pipeline by stage reached" info={FORMULAS.funnel}>Funnel snapshot</SectionTitle>
           <div className="grid gap-2">
             {funnel(rows).map((s) => (
               <div key={s.key} className="grid grid-cols-12 items-center gap-2">
@@ -146,7 +150,7 @@ export function ExecutiveSummary() {
 
         {/* Velocity decomposition */}
         <Card>
-          <SectionTitle hint="median days per segment">Velocity decomposition</SectionTitle>
+          <SectionTitle hint="median days per segment" info={FORMULAS.velocityDecomp}>Velocity decomposition</SectionTitle>
           <div className="grid gap-2">
             {decomp.map((d) => (
               <div key={d.key} className="grid grid-cols-12 items-center gap-2">
@@ -163,7 +167,7 @@ export function ExecutiveSummary() {
       {/* Watchlist + callouts */}
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
-          <SectionTitle>Watchlist</SectionTitle>
+          <SectionTitle info={FORMULAS.watchlist}>Watchlist</SectionTitle>
           <div className="flex flex-wrap gap-3">
             <button type="button" onClick={() => setActiveView('review')} className="flex-1 rounded-lg border border-slate-200 p-3 text-left hover:bg-slate-50">
               <div className="tabular text-2xl font-semibold text-critical-600">{num(aged180)}</div>
@@ -176,7 +180,7 @@ export function ExecutiveSummary() {
           </div>
         </Card>
         <Card>
-          <SectionTitle hint="auto-generated from thresholds">Callouts</SectionTitle>
+          <SectionTitle hint="auto-generated from thresholds" info={FORMULAS.callouts}>Callouts</SectionTitle>
           {notes.length === 0 ? (
             <p className="text-sm text-slate-400">Nothing notable against current thresholds.</p>
           ) : (

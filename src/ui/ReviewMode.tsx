@@ -20,6 +20,7 @@ import {
 import { formatISO } from '../domain/dates';
 import { Card, Chip, SectionTitle } from './components';
 import { ExportBar } from './ExportBar';
+import { FORMULAS } from './definitions';
 import { num, pct } from './format';
 import { buildAliasMap, maskValue } from './mask';
 
@@ -79,7 +80,7 @@ export function ReviewMode() {
 
         {/* Scope vs baseline */}
         <Card>
-          <SectionTitle hint="their median vs org median — variance highlighted">Scorecard vs baseline</SectionTitle>
+          <SectionTitle hint="their median vs org median — variance highlighted" info={FORMULAS.reviewScorecard}>Scorecard vs baseline</SectionTitle>
           <table className="w-full text-sm">
             <thead className="text-xs text-slate-400">
               <tr>
@@ -107,14 +108,14 @@ export function ReviewMode() {
 
         {/* Per-BU & per-Function scorecards */}
         <div className="grid gap-5 lg:grid-cols-2">
-          <ScorecardTable title="Per Business Unit" rows={byGroupScorecards(scope, 'businessUnit')} />
-          <ScorecardTable title="Per Function" rows={byGroupScorecards(scope, 'function')} />
+          <ScorecardTable title="Per Business Unit" rows={byGroupScorecards(scope, 'businessUnit')} info={FORMULAS.groupScorecard} />
+          <ScorecardTable title="Per Function" rows={byGroupScorecards(scope, 'function')} info={FORMULAS.groupScorecard} />
         </div>
 
         {/* Worklists */}
         <div className="grid gap-5 lg:grid-cols-2">
           <Card>
-            <SectionTitle hint="open > 90d, oldest first — walk these in the review">Aged-open worklist</SectionTitle>
+            <SectionTitle hint="open > 90d, oldest first — walk these in the review" info={FORMULAS.reviewAgedWorklist}>Aged-open worklist</SectionTitle>
             <Worklist
               cols={['Req', 'BU', 'Function', 'Stage', 'Age']}
               rows={agedOpenWorklist(scope, 90).slice(0, 15).map((a) => [
@@ -128,7 +129,7 @@ export function ReviewMode() {
             />
           </Card>
           <Card>
-            <SectionTitle hint="offer accepted, awaiting join">TBO worklist</SectionTitle>
+            <SectionTitle hint="offer accepted, awaiting join" info={FORMULAS.reviewTbo}>TBO worklist</SectionTitle>
             <Worklist
               cols={['Req', 'BU', 'TBO age', 'Next follow-up', 'Recruiter']}
               rows={tboWorklist(scope).slice(0, 15).map((t) => [
@@ -145,7 +146,7 @@ export function ReviewMode() {
 
         {/* Drop analysis */}
         <Card>
-          <SectionTitle hint="counts + masked reasons (names stripped)">Drop analysis</SectionTitle>
+          <SectionTitle hint="counts + masked reasons (names stripped)" info={FORMULAS.dropAnalysis}>Drop analysis</SectionTitle>
           <div className="mb-2 text-sm text-slate-600">
             <strong>{num(drops.count)}</strong> drop(s) · {pct(drops.rate * 100)} of scope
           </div>
@@ -164,10 +165,10 @@ export function ReviewMode() {
   );
 }
 
-function ScorecardTable({ title, rows }: { title: string; rows: GroupScorecard[] }) {
+function ScorecardTable({ title, rows, info }: { title: string; rows: GroupScorecard[]; info?: string }) {
   return (
     <Card>
-      <SectionTitle>{title}</SectionTitle>
+      <SectionTitle info={info}>{title}</SectionTitle>
       {rows.length === 0 ? (
         <p className="text-xs text-slate-400">No data.</p>
       ) : (
