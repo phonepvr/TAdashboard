@@ -2,9 +2,12 @@ name: Deploy to GitHub Pages
 
 # Artifact-based deploy (no long-lived gh-pages branch). One-time setup:
 # repo Settings → Pages → "Build and deployment" → Source = "GitHub Actions".
+# GitHub Pages only allows deploys from the repo's DEFAULT branch; this repo's
+# default branch is currently `claude/lucid-bardeen-f1k371`, so it is listed here
+# alongside `main`. Rename the default branch to `main` and you can drop it.
 on:
   push:
-    branches: [main]
+    branches: [main, claude/lucid-bardeen-f1k371]
   workflow_dispatch:
 
 permissions:
