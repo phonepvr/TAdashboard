@@ -220,6 +220,13 @@ export function normalizeRow(
   const concept = stageVal ? matchFunnelConcept(stageVal) : null;
   const dropCell = normStr(cellOf(row, cols.dropList));
   const wasDropped = dropCell !== null || concept?.key === 'dropped';
+  // sanitized reason phrase: text after the first name/value delimiter, capped.
+  let dropReason: string | null = null;
+  if (dropCell) {
+    const parts = dropCell.split(/\s*[-:–—|]\s*/);
+    const phrase = (parts.length > 1 ? parts.slice(1).join(' - ') : dropCell).trim();
+    dropReason = phrase ? phrase.slice(0, 60) : null;
+  }
   const isOnHold = concept?.key === 'hold';
   const isJoined = joinMs !== null;
   const isTBO = !isJoined && acceptMs !== null;
@@ -258,6 +265,7 @@ export function normalizeRow(
     isOnHold,
     isTBO,
     wasDropped,
+    dropReason,
   };
 }
 

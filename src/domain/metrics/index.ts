@@ -12,6 +12,8 @@ export * from './ageing';
 export * from './diversity';
 export * from './source';
 export * from './recruiter';
+export * from './review';
+export * from './trends';
 
 import type { NormalizedRow } from '../types';
 import { pipelineSnapshot } from './volume';

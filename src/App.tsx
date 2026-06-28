@@ -5,19 +5,25 @@ import { FileLoader } from './ui/FileLoader';
 import { MappingScreen } from './ui/MappingScreen';
 import { DataQualityReadout } from './ui/DataQualityReadout';
 import { MetricsView } from './ui/MetricsView';
+import { ExecutiveSummary } from './ui/ExecutiveSummary';
+import { ReviewMode } from './ui/ReviewMode';
 import { FilterBar } from './ui/FilterBar';
 import { ProgressBar } from './ui/components';
+import type { AppView } from './state/store';
 
 function Dashboard() {
   const activeView = useStore((s) => s.activeView);
   const setActiveView = useStore((s) => s.setActiveView);
-  const tabs: { key: 'metrics' | 'dq'; label: string }[] = [
+  const tabs: { key: AppView; label: string }[] = [
+    { key: 'exec', label: 'Executive' },
+    { key: 'review', label: 'Review' },
     { key: 'metrics', label: 'Metrics' },
     { key: 'dq', label: 'Data Quality' },
   ];
+  const showFilter = activeView === 'exec' || activeView === 'metrics';
   return (
     <div>
-      <div className="flex gap-1 border-b border-slate-200 bg-white px-4 pt-2">
+      <div className="no-print flex gap-1 border-b border-slate-200 bg-white px-4 pt-2">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -33,8 +39,11 @@ function Dashboard() {
           </button>
         ))}
       </div>
-      {activeView === 'metrics' && <FilterBar />}
-      {activeView === 'metrics' ? <MetricsView /> : <DataQualityReadout />}
+      {showFilter && <FilterBar />}
+      {activeView === 'exec' && <ExecutiveSummary />}
+      {activeView === 'review' && <ReviewMode />}
+      {activeView === 'metrics' && <MetricsView />}
+      {activeView === 'dq' && <DataQualityReadout />}
     </div>
   );
 }

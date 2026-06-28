@@ -52,3 +52,18 @@ body {
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* One-pager print: hide app chrome, flatten cards. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .card {
+    box-shadow: none !important;
+    border-color: #e5e7eb !important;
+    break-inside: avoid;
+  }
+}

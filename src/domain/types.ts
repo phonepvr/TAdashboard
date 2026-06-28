@@ -176,6 +176,8 @@ export interface NormalizedRow {
   isOnHold: boolean;
   isTBO: boolean;
   wasDropped: boolean;
+  /** sanitized drop-reason phrase (name-stripped) for analysis without exposing identity. */
+  dropReason: string | null;
 }
 
 export interface DedupSummary {

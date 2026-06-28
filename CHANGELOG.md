@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here.
 
+## [0.3.0] — Phase 3: Executive Summary + HR-Head Review
+
+### Added
+- **Executive Summary** (§8.1, default landing): headline KPI strip, a **"what
+  changed"** recent-vs-prior delta row with trend arrows, a **demand-vs-supply**
+  line chart (Recharts), funnel snapshot, velocity decomposition + bottleneck,
+  a **watchlist** (aged-open + TBO), and auto-generated plain-English **callouts**.
+- **HR-Head / BU / Function Review** (§8.2, meeting mode): pick an HR Head (name
+  **aliased** "HR Head A/B…") → **scope vs org baseline** on every KPI with
+  variance highlighting; **per-BU and per-function scorecards**; scoped
+  **aged-open** and **TBO** worklists; **drop analysis** with **name-stripped**
+  reasons; and a **print one-pager** (print CSS hides app chrome).
+- Review/trend metrics (`review.ts`, `trends.ts`): scorecards, baseline
+  comparison, per-group scorecards, TBO worklist, drop analysis, callouts,
+  period deltas. Derived a sanitized `dropReason` in normalization.
+- 7 new unit tests (63 total). Recharts added (bundled, no network).
+
 ## [0.2.0] — Phase 2: Metric catalogue + Data-Quality panel
 
 ### Added

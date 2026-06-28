@@ -40,6 +40,8 @@ export type SlicerFilterKey =
   | 'demandType'
   | 'location';
 
+export type AppView = 'exec' | 'review' | 'metrics' | 'dq';
+
 interface Progress {
   phase: string;
   pct: number;
@@ -56,7 +58,7 @@ interface StoreState {
   prefs: PrivacyPrefs;
   initialized: boolean;
   filters: FilterContext;
-  activeView: 'metrics' | 'dq';
+  activeView: AppView;
 
   init: () => Promise<void>;
   loadFile: (file: File) => Promise<void>;
@@ -69,7 +71,7 @@ interface StoreState {
   newSession: () => void;
   setFilter: (role: SlicerFilterKey, values: string[]) => void;
   clearFilters: () => void;
-  setActiveView: (view: 'metrics' | 'dq') => void;
+  setActiveView: (view: AppView) => void;
   getRawRows: (indices: number[]) => Promise<{ i: number; cells: RawRow }[]>;
   setPref: <K extends keyof PrivacyPrefs>(key: K, value: PrivacyPrefs[K]) => Promise<void>;
   clearAll: () => Promise<void>;
@@ -93,7 +95,7 @@ export const useStore = create<StoreState>()((set, get) => ({
   prefs: { ...DEFAULT_PREFS },
   initialized: false,
   filters: {},
-  activeView: 'metrics',
+  activeView: 'exec',
 
   init: async () => {
     if (get().initialized) return;
