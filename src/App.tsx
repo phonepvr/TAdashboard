@@ -4,9 +4,13 @@ import { TopBar } from './ui/TopBar';
 import { FileLoader } from './ui/FileLoader';
 import { MappingScreen } from './ui/MappingScreen';
 import { DataQualityReadout } from './ui/DataQualityReadout';
-import { MetricsView } from './ui/MetricsView';
 import { ExecutiveSummary } from './ui/ExecutiveSummary';
 import { ReviewMode } from './ui/ReviewMode';
+import { FunnelView } from './ui/FunnelView';
+import { AgeingView } from './ui/AgeingView';
+import { DiversitySourceView } from './ui/DiversitySourceView';
+import { RecruiterView } from './ui/RecruiterView';
+import { ForecastView } from './ui/ForecastView';
 import { FilterBar } from './ui/FilterBar';
 import { ProgressBar } from './ui/components';
 import type { AppView } from './state/store';
@@ -17,13 +21,19 @@ function Dashboard() {
   const tabs: { key: AppView; label: string }[] = [
     { key: 'exec', label: 'Executive' },
     { key: 'review', label: 'Review' },
-    { key: 'metrics', label: 'Metrics' },
+    { key: 'funnel', label: 'Funnel & Velocity' },
+    { key: 'ageing', label: 'Ageing & TBO' },
+    { key: 'diversity', label: 'Diversity & Source' },
+    { key: 'recruiters', label: 'Recruiters' },
+    { key: 'forecast', label: 'Forecast' },
     { key: 'dq', label: 'Data Quality' },
   ];
-  const showFilter = activeView === 'exec' || activeView === 'metrics';
+  // The filter bar drives the analytical views; Review has its own head picker and
+  // Data Quality is intentionally whole-dataset.
+  const showFilter = activeView !== 'review' && activeView !== 'dq';
   return (
     <div>
-      <div className="no-print flex gap-1 border-b border-slate-200 bg-white px-4 pt-2">
+      <div className="no-print flex flex-wrap gap-1 border-b border-slate-200 bg-white px-4 pt-2">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -42,7 +52,11 @@ function Dashboard() {
       {showFilter && <FilterBar />}
       {activeView === 'exec' && <ExecutiveSummary />}
       {activeView === 'review' && <ReviewMode />}
-      {activeView === 'metrics' && <MetricsView />}
+      {activeView === 'funnel' && <FunnelView />}
+      {activeView === 'ageing' && <AgeingView />}
+      {activeView === 'diversity' && <DiversitySourceView />}
+      {activeView === 'recruiters' && <RecruiterView />}
+      {activeView === 'forecast' && <ForecastView />}
       {activeView === 'dq' && <DataQualityReadout />}
     </div>
   );

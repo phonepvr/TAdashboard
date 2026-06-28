@@ -1,0 +1,73 @@
+/** §8.7 Recruiter / RPO productivity. PII masked by default; median TTF n-guarded. */
+import { useMemo } from 'react';
+import { useStore } from '../state/store';
+import { applyFilters, loadDistribution, recruiterProductivity, type RecruiterLoad } from '../domain/metrics';
+import { Card, SectionTitle, Stat } from './components';
+import { num } from './format';
+import { maskValue } from './mask';
+
+function ProductivityTable({ rows, reveal }: { rows: RecruiterLoad[]; reveal: boolean }) {
+  if (rows.length === 0) return <p className="text-xs text-slate-400">No data.</p>;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead className="text-slate-400">
+          <tr>
+            <th className="text-left font-medium">Name</th>
+            <th className="text-right font-medium">Total</th>
+            <th className="text-right font-medium">Open WIP</th>
+            <th className="text-right font-medium">Joins</th>
+            <th className="text-right font-medium">Median TTF</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.slice(0, 20).map((r) => (
+            <tr key={r.name} className="border-t border-slate-100">
+              <td className="py-1 text-slate-700">{maskValue(r.name, true, reveal)}</td>
+              <td className="tabular py-1 text-right text-slate-600">{num(r.total)}</td>
+              <td className="tabular py-1 text-right text-slate-600">{num(r.openWip)}</td>
+              <td className="tabular py-1 text-right text-slate-600">{num(r.joined)}</td>
+              <td className="tabular py-1 text-right text-slate-600">{r.ttf ? `${num(r.ttf.median)}d` : <span className="text-slate-300">n&lt;5</span>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function RecruiterView() {
+  const result = useStore((s) => s.result);
+  const filters = useStore((s) => s.filters);
+  const reveal = useStore((s) => s.prefs.privateDrillDown);
+  const rows = useMemo(() => (result ? applyFilters(result.rows, filters) : []), [result, filters]);
+
+  const recruiters = useMemo(() => recruiterProductivity(rows, 'recruiter', 5), [rows]);
+  const rpo = useMemo(() => recruiterProductivity(rows, 'rpoLead', 5), [rows]);
+  const recLoad = useMemo(() => loadDistribution(rows, 'recruiter'), [rows]);
+  const rpoLoad = useMemo(() => loadDistribution(rows, 'rpoLead'), [rows]);
+
+  if (!result) return null;
+  if (rows.length === 0) return <div className="px-4 py-16 text-center text-sm text-slate-400">No rows match the current filters.</div>;
+
+  return (
+    <div className="mx-auto grid max-w-6xl gap-5 px-4 py-5">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Stat label="Recruiters" value={num(recLoad.recruiters)} />
+        <Stat label="Max load" value={num(recLoad.maxLoad)} sub={`median ${num(recLoad.medianLoad)}`} />
+        <Stat label="RPO leads" value={num(rpoLoad.recruiters)} />
+        <Stat label="RPO max load" value={num(rpoLoad.maxLoad)} sub={`median ${num(rpoLoad.medianLoad)}`} />
+      </div>
+
+      <Card>
+        <SectionTitle hint="WIP · throughput · median TTF (n≥5) — PII masked">Recruiter productivity</SectionTitle>
+        <ProductivityTable rows={recruiters} reveal={reveal} />
+      </Card>
+
+      <Card>
+        <SectionTitle hint="RPO vendor leads">RPO lead productivity</SectionTitle>
+        <ProductivityTable rows={rpo} reveal={reveal} />
+      </Card>
+    </div>
+  );
+}

@@ -75,6 +75,23 @@ export function bottleneck(decomp: NamedDuration[]): NamedDuration | null {
   return best;
 }
 
+/** TTF distribution as fixed-width histogram bins (days). */
+export function ttfHistogram(rows: NormalizedRow[], binSize = 30, cap = TTF_CAP_DEFAULT): { bin: string; lo: number; count: number }[] {
+  const vals = durationValues(rows, 'reqReceivedDate', 'joiningDate', cap);
+  const bins = new Map<number, number>();
+  for (const v of vals) {
+    const b = Math.floor(v / binSize);
+    bins.set(b, (bins.get(b) ?? 0) + 1);
+  }
+  const maxBin = bins.size ? Math.max(...bins.keys()) : -1;
+  const out: { bin: string; lo: number; count: number }[] = [];
+  for (let b = 0; b <= maxBin; b++) {
+    const lo = b * binSize;
+    out.push({ bin: `${lo}–${lo + binSize}`, lo, count: bins.get(b) ?? 0 });
+  }
+  return out;
+}
+
 /** Median TTF (or any duration) grouped by a categorical role, with n guard. */
 export function durationByGroup(
   rows: NormalizedRow[],

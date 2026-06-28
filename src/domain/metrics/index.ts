@@ -14,6 +14,8 @@ export * from './source';
 export * from './recruiter';
 export * from './review';
 export * from './trends';
+export * from './forecast';
+export * from './patterns';
 
 import type { NormalizedRow } from '../types';
 import { pipelineSnapshot } from './volume';

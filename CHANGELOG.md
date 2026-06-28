@@ -2,6 +2,32 @@
 
 All notable changes to this project are documented here.
 
+## [0.4.0] — Phase 4: Patterns & Projections
+
+### Added
+- **Forecast engine** (`forecast.ts`, `patterns.ts`) — pure, unit-tested,
+  deliberately simple/transparent:
+  - **Demand forecast**: 3-mo moving average **+** OLS linear trend with a
+    ±1.96σ uncertainty band and a short-history caveat.
+  - **Projected joins**: empirical stage→join conversion × median residual time
+    applied to the current open pipeline → expected joins/month vs demand →
+    **fulfilment gap**, with a visible **assumptions panel**.
+  - **Open-req ETA + at-risk** flagging (past the cohort median TTF).
+  - **TBO landing** forecast (accepted + median accept→join).
+  - **Diversity trajectory** (female share among joins over time).
+  - **Patterns**: seasonality, concentration (Pareto), TTF drift.
+- **Forecast view** with charts (Recharts), per-projection method captions, and
+  "directional" caveats.
+- **Dedicated domain views** promoting the combined preview into tabs:
+  **Funnel & Velocity** (§8.3: cycle-time cards, TTF histogram, stage-dwell,
+  approval-cycle drag, TTF-by-level), **Ageing & TBO** (§8.4: distribution,
+  aged-open worklist, reason Pareto, TBO buckets + follow-up tracker),
+  **Diversity & Source** (§8.5–8.6: funnel-stage representation, joined-vs-
+  pipeline, source effectiveness, referral share), **Recruiters** (§8.7:
+  productivity + load distribution, n-guarded, masked).
+- 8-tab view switcher; the combined Metrics preview was retired.
+- 15 new unit tests (71 total).
+
 ## [0.3.0] — Phase 3: Executive Summary + HR-Head Review
 
 ### Added

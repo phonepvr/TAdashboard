@@ -40,7 +40,15 @@ export type SlicerFilterKey =
   | 'demandType'
   | 'location';
 
-export type AppView = 'exec' | 'review' | 'metrics' | 'dq';
+export type AppView =
+  | 'exec'
+  | 'review'
+  | 'funnel'
+  | 'ageing'
+  | 'diversity'
+  | 'recruiters'
+  | 'forecast'
+  | 'dq';
 
 interface Progress {
   phase: string;
