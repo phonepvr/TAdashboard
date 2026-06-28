@@ -27,12 +27,17 @@ test('demo → map → data-quality readout, fully offline + CSP present', async
   await expect(page.getByRole('heading', { name: /Map your columns/i })).toBeVisible({ timeout: 20_000 });
   await page.getByRole('button', { name: /Confirm .* analyze/i }).first().click();
 
-  // (5) Data-quality readout renders (normalized + de-duped + scored).
-  await expect(page.getByText(/Data-quality score/i)).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByText(/Field completeness/i)).toBeVisible();
+  // (5) Metrics view renders (normalized + de-duped + scored, full §7 catalogue).
+  await expect(page.getByText(/Velocity decomposition/i)).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('TBO (awaiting join)')).toBeVisible();
   await expect(page.getByText('DEMO DATA')).toBeVisible();
 
-  // (6) An interaction (toggle a privacy control) — still no egress.
+  // (6) Switch to the Data-Quality panel via the view switcher.
+  await page.getByRole('button', { name: 'Data Quality' }).click();
+  await expect(page.getByText(/Data-quality score/i)).toBeVisible();
+  await expect(page.getByText(/Field completeness/i)).toBeVisible();
+
+  // (7) An interaction (toggle a privacy control) — still no egress.
   await page.getByRole('switch', { name: /Private drill-down/i }).click();
 
   expect(external, `unexpected external requests: ${external.join(', ')}`).toHaveLength(0);

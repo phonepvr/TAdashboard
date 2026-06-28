@@ -122,6 +122,8 @@ const AGE_BUCKETS: { label: string; max: number }[] = [
   { label: '365+', max: Infinity },
 ];
 
+export const AGE_BUCKET_LABELS: string[] = AGE_BUCKETS.map((b) => b.label);
+
 export function ageBucket(days: number | null): string | null {
   if (days === null || days < 0) return null;
   return AGE_BUCKETS.find((b) => days <= b.max)!.label;
@@ -134,6 +136,8 @@ const TBO_BUCKETS: { label: string; max: number }[] = [
   { label: '31–60', max: 60 },
   { label: '60+', max: Infinity },
 ];
+
+export const TBO_BUCKET_LABELS: string[] = TBO_BUCKETS.map((b) => b.label);
 
 export function tboBucket(days: number | null): string | null {
   if (days === null || days < 0) return null;

@@ -7,8 +7,10 @@ import type {
   LogicalRole,
   MappingConfig,
   NormalizeResult,
+  RawRow,
   TableProfile,
 } from '../domain/types';
+import type { FilterContext } from '../domain/metrics';
 import { buildDefaultMapping, suggestStageOrder } from '../domain/mapping';
 import { MAPPING_VERSION } from '../domain/mapping';
 import { generateDemoTable } from '../domain/demo';
@@ -26,6 +28,18 @@ import {
 
 export type Status = 'idle' | 'parsing' | 'mapping' | 'normalizing' | 'ready' | 'error';
 
+/** Filter keys that hold a string[] of allowed values (excludes the numeric period bounds). */
+export type SlicerFilterKey =
+  | 'calendarYear'
+  | 'businessUnit'
+  | 'function'
+  | 'hrHead'
+  | 'level'
+  | 'recruiter'
+  | 'source'
+  | 'demandType'
+  | 'location';
+
 interface Progress {
   phase: string;
   pct: number;
@@ -41,6 +55,8 @@ interface StoreState {
   isDemo: boolean;
   prefs: PrivacyPrefs;
   initialized: boolean;
+  filters: FilterContext;
+  activeView: 'metrics' | 'dq';
 
   init: () => Promise<void>;
   loadFile: (file: File) => Promise<void>;
@@ -51,6 +67,10 @@ interface StoreState {
   confirmMapping: () => Promise<void>;
   backToMapping: () => void;
   newSession: () => void;
+  setFilter: (role: SlicerFilterKey, values: string[]) => void;
+  clearFilters: () => void;
+  setActiveView: (view: 'metrics' | 'dq') => void;
+  getRawRows: (indices: number[]) => Promise<{ i: number; cells: RawRow }[]>;
   setPref: <K extends keyof PrivacyPrefs>(key: K, value: PrivacyPrefs[K]) => Promise<void>;
   clearAll: () => Promise<void>;
 }
@@ -72,6 +92,8 @@ export const useStore = create<StoreState>()((set, get) => ({
   isDemo: false,
   prefs: { ...DEFAULT_PREFS },
   initialized: false,
+  filters: {},
+  activeView: 'metrics',
 
   init: async () => {
     if (get().initialized) return;
@@ -149,7 +171,18 @@ export const useStore = create<StoreState>()((set, get) => ({
 
   backToMapping: () => set({ status: 'mapping' }),
 
-  newSession: () => set({ status: 'idle', profile: null, result: null, progress: null, error: null }),
+  newSession: () =>
+    set({ status: 'idle', profile: null, result: null, progress: null, error: null, filters: {} }),
+
+  setFilter: (role, values) => {
+    const filters = { ...get().filters };
+    if (values.length === 0) delete filters[role];
+    else filters[role] = values;
+    set({ filters });
+  },
+  clearFilters: () => set({ filters: {} }),
+  setActiveView: (view) => set({ activeView: view }),
+  getRawRows: (indices) => getWorkerClient().getRawRows(indices),
 
   setPref: async (key, value) => {
     const prefs = { ...get().prefs, [key]: value };

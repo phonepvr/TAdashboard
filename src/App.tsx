@@ -4,7 +4,40 @@ import { TopBar } from './ui/TopBar';
 import { FileLoader } from './ui/FileLoader';
 import { MappingScreen } from './ui/MappingScreen';
 import { DataQualityReadout } from './ui/DataQualityReadout';
+import { MetricsView } from './ui/MetricsView';
+import { FilterBar } from './ui/FilterBar';
 import { ProgressBar } from './ui/components';
+
+function Dashboard() {
+  const activeView = useStore((s) => s.activeView);
+  const setActiveView = useStore((s) => s.setActiveView);
+  const tabs: { key: 'metrics' | 'dq'; label: string }[] = [
+    { key: 'metrics', label: 'Metrics' },
+    { key: 'dq', label: 'Data Quality' },
+  ];
+  return (
+    <div>
+      <div className="flex gap-1 border-b border-slate-200 bg-white px-4 pt-2">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setActiveView(t.key)}
+            className={`rounded-t-lg px-3 py-1.5 text-sm font-medium ${
+              activeView === t.key
+                ? 'border border-b-white border-slate-200 bg-white text-brand-700'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {activeView === 'metrics' && <FilterBar />}
+      {activeView === 'metrics' ? <MetricsView /> : <DataQualityReadout />}
+    </div>
+  );
+}
 
 export function App() {
   const init = useStore((s) => s.init);
@@ -32,7 +65,7 @@ export function App() {
 
         {status === 'mapping' && <MappingScreen />}
 
-        {status === 'ready' && <DataQualityReadout />}
+        {status === 'ready' && <Dashboard />}
 
         {status === 'error' && (
           <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-16 text-center">

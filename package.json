@@ -1,7 +1,7 @@
 {
   "name": "tadashboard",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Offline, privacy-first TA / Recruitment command centre. All data stays in the browser.",
   "license": "MIT",

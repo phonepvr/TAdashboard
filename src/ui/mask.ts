@@ -5,7 +5,8 @@
  * its presentation.
  */
 export function initials(value: string): string {
-  const parts = value.trim().split(/\s+/).filter(Boolean);
+  // only tokens that start with a letter (skips "(demo)", numbers, punctuation)
+  const parts = value.trim().split(/\s+/).filter((p) => /^[A-Za-z]/.test(p));
   if (parts.length === 0) return '••';
   return parts
     .slice(0, 3)
